@@ -45,43 +45,43 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('land.list_lands') }}" class="nav-link {% if 'land' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('land.list_lands') }}" class="nav-link {% if request.endpoint and 'land' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-map"></i>
                     <span>My Lands</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('cultivation.active_cultivations') }}" class="nav-link {% if 'cultivation.active' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('cultivation.active_cultivations') }}" class="nav-link {% if request.endpoint and 'cultivation.active' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-seedling"></i>
                     <span>Active Cultivation</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('selling.marketplace') }}" class="nav-link {% if 'selling' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('selling.marketplace') }}" class="nav-link {% if request.endpoint and 'selling' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-store"></i>
                     <span>Sell Crops</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('ecommerce.products') }}" class="nav-link {% if 'ecommerce' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('ecommerce.products') }}" class="nav-link {% if request.endpoint and 'ecommerce' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Products</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('community.feed') }}" class="nav-link {% if 'community' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('community.feed') }}" class="nav-link {% if request.endpoint and 'community' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-users"></i>
                     <span>Community</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('dashboard.profile') }}" class="nav-link {% if request.endpoint == 'dashboard.profile' %}active{% endif %}">
+                <a href="{{ url_for('dashboard.profile') }}" class="nav-link {% if request.endpoint and request.endpoint == 'dashboard.profile' %}active{% endif %}">
                     <i class="fas fa-user-circle"></i>
                     <span>Profile</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('settings.index') }}" class="nav-link {% if 'settings' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('settings.index') }}" class="nav-link {% if request.endpoint and 'settings' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </a>

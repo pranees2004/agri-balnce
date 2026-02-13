@@ -89,4 +89,67 @@
     </a>
 </div>
 {% endif %}
+
+<!-- Region Limits (Legacy) Section -->
+<div class="page-header" style="margin-top: 2rem;">
+    <h2 class="page-title">Region Limits (Legacy)</h2>
+    <a href="{{ url_for('admin.add_limit') }}" class="btn btn-outline">
+        <i class="fas fa-plus"></i> Add Region Limit
+    </a>
+</div>
+
+<div class="alert alert-warning" style="padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border-left: 4px solid #f39c12; background-color: #fef5e7; color: #d68910;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <strong>Legacy System:</strong> Region Limits is the older limit system. Please migrate to Cultivation Quotas above for better location-based and seasonal control.
+</div>
+
+{% if region_limits %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>District</th>
+                    <th>Crop Name</th>
+                    <th>Max Area</th>
+                    <th>Max Cultivations</th>
+                    <th>Current Usage</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for limit in region_limits %}
+                <tr>
+                    <td>{{ limit.district }}</td>
+                    <td>{{ limit.crop_name }}</td>
+                    <td>{{ limit.max_area }} acres</td>
+                    <td>{{ limit.max_cultivation_count }}</td>
+                    <td>{{ limit.current_area_used }} acres / {{ limit.current_cultivation_count }} farmers</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if limit.is_active else 'error' }}">
+                            {{ 'Active' if limit.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_limit', limit_id=limit.id) }}" class="btn btn-sm btn-outline">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin.delete_limit', limit_id=limit.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this limit?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card text-center">
+    <p>No region limits set. <a href="{{ url_for('admin.add_limit') }}">Add one</a></p>
+</div>
+{% endif %}
 {% endblock %}

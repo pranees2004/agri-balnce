@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Crop - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Crop: {{ crop.crop_name }}</h1>
+    <a href="{{ url_for('admin.crop_master') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <input type="text" id="crop_name" name="crop_name" class="form-control" value="{{ crop.crop_name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="crop_type">Crop Type</label>
+                <select id="crop_type" name="crop_type" class="form-control">
+                    <option value="">Select Type</option>
+                    <option value="Grain" {% if crop.crop_type == 'Grain' %}selected{% endif %}>Grain</option>
+                    <option value="Vegetable" {% if crop.crop_type == 'Vegetable' %}selected{% endif %}>Vegetable</option>
+                    <option value="Fruit" {% if crop.crop_type == 'Fruit' %}selected{% endif %}>Fruit</option>
+                    <option value="Pulse" {% if crop.crop_type == 'Pulse' %}selected{% endif %}>Pulse</option>
+                    <option value="Oilseed" {% if crop.crop_type == 'Oilseed' %}selected{% endif %}>Oilseed</option>
+                    <option value="Fiber" {% if crop.crop_type == 'Fiber' %}selected{% endif %}>Fiber</option>
+                    <option value="Other" {% if crop.crop_type == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="scientific_name">Scientific Name</label>
+                <input type="text" id="scientific_name" name="scientific_name" class="form-control" value="{{ crop.scientific_name or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="avg_yield_per_acre">Average Yield per Acre</label>
+                <input type="number" id="avg_yield_per_acre" name="avg_yield_per_acre" class="form-control" step="0.01" value="{{ crop.avg_yield_per_acre or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="yield_unit">Yield Unit</label>
+                <select id="yield_unit" name="yield_unit" class="form-control">
+                    <option value="kg" {% if crop.yield_unit == 'kg' %}selected{% endif %}>Kilograms</option>
+                    <option value="quintal" {% if crop.yield_unit == 'quintal' %}selected{% endif %}>Quintals</option>
+                    <option value="tonne" {% if crop.yield_unit == 'tonne' %}selected{% endif %}>Tonnes</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="growth_duration_days">Growth Duration (days)</label>
+                <input type="number" id="growth_duration_days" name="growth_duration_days" class="form-control" value="{{ crop.growth_duration_days or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="water_requirement">Water Requirement</label>
+                <select id="water_requirement" name="water_requirement" class="form-control">
+                    <option value="">Select</option>
+                    <option value="Low" {% if crop.water_requirement == 'Low' %}selected{% endif %}>Low</option>
+                    <option value="Medium" {% if crop.water_requirement == 'Medium' %}selected{% endif %}>Medium</option>
+                    <option value="High" {% if crop.water_requirement == 'High' %}selected{% endif %}>High</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="season">Season</label>
+                <select id="season" name="season" class="form-control">
+                    <option value="">Select</option>
+                    <option value="Kharif" {% if crop.season == 'Kharif' %}selected{% endif %}>Kharif (Monsoon)</option>
+                    <option value="Rabi" {% if crop.season == 'Rabi' %}selected{% endif %}>Rabi (Winter)</option>
+                    <option value="Zaid" {% if crop.season == 'Zaid' %}selected{% endif %}>Zaid (Summer)</option>
+                    <option value="Year-round" {% if crop.season == 'Year-round' %}selected{% endif %}>Year-round</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="4">{{ crop.description or '' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">
+                <input type="checkbox" name="is_active" {% if crop.is_active %}checked{% endif %}> Active
+            </label>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.crop_master') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Crop
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
