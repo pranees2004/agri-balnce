@@ -64,10 +64,32 @@
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="selling_price_expectation">Price Expectation (₹ per {{ cultivation.yield_unit }})</label>
+                <label class="form-label" for="selling_price_expectation">
+                    {% if admin_price %}
+                        Admin-Set Price (₹ per {{ cultivation.yield_unit }})
+                    {% else %}
+                        Price Expectation (₹ per {{ cultivation.yield_unit }})
+                    {% endif %}
+                </label>
                 <input type="number" id="selling_price_expectation" name="selling_price_expectation" 
-                       class="form-control" step="0.01" min="0">
-                <p class="form-help">Your expected selling price (optional)</p>
+                       class="form-control" step="0.01" min="0" 
+                       {% if admin_price %}value="{{ admin_price.price_per_unit }}" readonly{% endif %}>
+                <p class="form-help">
+                    {% if admin_price %}
+                        <strong class="text-success">
+                            <i class="fas fa-check-circle"></i> 
+                            Admin has set the price at ₹{{ admin_price.price_per_unit }}/{{ admin_price.unit }} for this period
+                        </strong>
+                        {% if admin_price.valid_from and admin_price.valid_to %}
+                            <br><small>Valid from {{ admin_price.valid_from.strftime('%d-%b-%Y') }} to {{ admin_price.valid_to.strftime('%d-%b-%Y') }}</small>
+                        {% endif %}
+                    {% else %}
+                        <strong class="text-warning">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            No admin price set for this period. Enter your expected price.
+                        </strong>
+                    {% endif %}
+                </p>
             </div>
             
             <div class="form-group">

@@ -240,7 +240,7 @@ class NewsArticle(db.Model):
 
 
 class CropPrice(db.Model):
-    """Admin-managed crop prices by region/district."""
+    """Admin-managed crop prices by region/district with time periods."""
     __tablename__ = 'crop_prices'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -250,6 +250,9 @@ class CropPrice(db.Model):
     price_per_unit = db.Column(db.Float, nullable=False)
     unit = db.Column(db.String(20), default='kg')
     units_sold = db.Column(db.Integer, default=0)  # Track units sold
+    # Period fields for time-based pricing
+    valid_from = db.Column(db.Date, nullable=True)  # Start date of price validity
+    valid_to = db.Column(db.Date, nullable=True)  # End date of price validity
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

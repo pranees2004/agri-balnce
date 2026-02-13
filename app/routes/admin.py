@@ -189,14 +189,54 @@ def prices():
 @login_required
 @admin_required
 def add_price():
-    """Add new crop price."""
+    """Add new crop price with period validity."""
     if request.method == 'POST':
+        # Handle date fields with validation
+        valid_from_str = request.form.get('valid_from')
+        valid_to_str = request.form.get('valid_to')
+        
+        valid_from = None
+        valid_to = None
+        
+        if valid_from_str:
+            try:
+                valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid "Valid From" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/add_price.html',
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
+        
+        if valid_to_str:
+            try:
+                valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid "Valid To" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/add_price.html',
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
+        
+        # Validate date range
+        if valid_from and valid_to and valid_from > valid_to:
+            flash('"Valid From" date cannot be after "Valid To" date.', 'error')
+            return render_template(
+                'admin/add_price.html',
+                districts=TAMIL_NADU_DISTRICTS,
+                crops=COMMON_CROPS
+            )
+        
         crop_price = CropPrice(
             crop_name=request.form.get('crop_name'),
             crop_type=request.form.get('crop_type'),
             district=request.form.get('district'),
             price_per_unit=float(request.form.get('price_per_unit', 0)),
             unit=request.form.get('unit', 'kg'),
+            valid_from=valid_from,
+            valid_to=valid_to,
             is_active=request.form.get('is_active') == 'on'
         )
         db.session.add(crop_price)
@@ -216,10 +256,52 @@ def add_price():
 @login_required
 @admin_required
 def edit_price(price_id):
-    """Edit crop price."""
+    """Edit crop price with period validity."""
     crop_price = CropPrice.query.get_or_404(price_id)
     
     if request.method == 'POST':
+        # Handle date fields with validation
+        valid_from_str = request.form.get('valid_from')
+        valid_to_str = request.form.get('valid_to')
+        
+        if valid_from_str:
+            try:
+                crop_price.valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid "Valid From" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/edit_price.html',
+                    price=crop_price,
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
+        else:
+            crop_price.valid_from = None
+        
+        if valid_to_str:
+            try:
+                crop_price.valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid "Valid To" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/edit_price.html',
+                    price=crop_price,
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
+        else:
+            crop_price.valid_to = None
+        
+        # Validate date range
+        if crop_price.valid_from and crop_price.valid_to and crop_price.valid_from > crop_price.valid_to:
+            flash('"Valid From" date cannot be after "Valid To" date.', 'error')
+            return render_template(
+                'admin/edit_price.html',
+                price=crop_price,
+                districts=TAMIL_NADU_DISTRICTS,
+                crops=COMMON_CROPS
+            )
+        
         crop_price.crop_name = request.form.get('crop_name', crop_price.crop_name)
         crop_price.crop_type = request.form.get('crop_type', crop_price.crop_type)
         crop_price.district = request.form.get('district', crop_price.district)

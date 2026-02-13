@@ -31,13 +31,47 @@ WATER_AVAILABILITY_FACTORS = {
 }
 
 
-def get_crop_price(crop_name, district):
-    """Get the current price for a crop in a specific district."""
-    price = CropPrice.query.filter_by(
+def get_crop_price(crop_name, district, harvest_date=None):
+    """Get the current price for a crop in a specific district.
+    
+    If harvest_date is provided, returns price valid for that date period.
+    Otherwise returns any active price for the crop/district.
+    """
+    query = CropPrice.query.filter_by(
         crop_name=crop_name,
         district=district,
         is_active=True
-    ).first()
+    )
+    
+    # If harvest date provided, filter by date period
+    if harvest_date:
+        if isinstance(harvest_date, str):
+            try:
+                harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
+            except ValueError:
+                # If date format is invalid, return without date filtering
+                # This allows the function to gracefully handle invalid dates
+                # and return any active price for the crop/district
+                pass
+            except Exception:
+                # Handle any other parsing errors
+                pass
+        
+        # Only apply date filtering if harvest_date was successfully parsed
+        if isinstance(harvest_date, date):
+            query = query.filter(
+                db.or_(
+                    CropPrice.valid_from.is_(None),
+                    CropPrice.valid_from <= harvest_date
+                )
+            ).filter(
+                db.or_(
+                    CropPrice.valid_to.is_(None),
+                    CropPrice.valid_to >= harvest_date
+                )
+            )
+    
+    price = query.first()
     return price
 
 
@@ -525,7 +559,7 @@ def active_cultivations():
 @cultivation_bp.route('/start', methods=['GET', 'POST'])
 @login_required
 def start_cultivation():
-    """Start new cultivation with AI advisory and quota enforcement."""
+    """Start new cultivation with quota enforcement and admin-controlled pricing."""
     lands = Land.query.filter_by(user_id=current_user.id).all()
     
     if not lands:
@@ -533,7 +567,6 @@ def start_cultivation():
         return redirect(url_for('land.add_land'))
     
     selected_land = None
-    recommendations = None
     quota_check_result = None
     
     if request.method == 'POST':
@@ -544,34 +577,6 @@ def start_cultivation():
         planting_date = request.form.get('planting_date')
         expected_harvest_date = request.form.get('expected_harvest_date')
         notes = request.form.get('notes')
-        
-        if 'get_recommendations' in request.form:
-            # Get AI recommendations with quota checking
-            selected_land = Land.query.filter_by(
-                id=land_id, user_id=current_user.id
-            ).first()
-            if selected_land:
-                area_requested = float(area_to_use) if area_to_use else selected_land.land_size
-                recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
-                
-                # Check quota availability
-                if crop_name:
-                    quota_allowed, quota_message, quota_obj = check_admin_quota(
-                        selected_land, crop_name, area_requested
-                    )
-                    quota_check_result = {
-                        'allowed': quota_allowed,
-                        'message': quota_message,
-                        'quota': quota_obj
-                    }
-            
-            return render_template(
-                'cultivation/start.html',
-                lands=lands,
-                selected_land=selected_land,
-                recommendations=recommendations,
-                quota_check=quota_check_result
-            )
         
         if 'save_cultivation' in request.form:
             if not land_id or not crop_name or not area_to_use:
@@ -601,8 +606,6 @@ def start_cultivation():
             if not quota_allowed:
                 flash(f'Cultivation blocked by admin quota: {quota_message}', 'error')
                 
-                # Get recommendations for alternative crops
-                recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
                 quota_check_result = {
                     'allowed': False,
                     'message': quota_message,
@@ -613,14 +616,16 @@ def start_cultivation():
                     'cultivation/start.html',
                     lands=lands,
                     selected_land=selected_land,
-                    recommendations=recommendations,
                     quota_check=quota_check_result
                 )
             
             # Generate cultivation approval ID
             approval_id = generate_cultivation_approval_id()
             
-            # Get AI recommendations
+            # Get AI recommendations internally for yield estimation
+            # Note: Recommendations are not displayed to user but are used for:
+            # 1. Calculating estimated yield and max sale quantity
+            # 2. Storing in database for admin reference and future viewing
             recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
             
             # Calculate estimated yield and max allowed sale quantity
@@ -683,7 +688,6 @@ def start_cultivation():
         'cultivation/start.html',
         lands=lands,
         selected_land=selected_land,
-        recommendations=recommendations,
         quota_check=quota_check_result
     )
 
@@ -748,7 +752,7 @@ def cultivation_history():
 @cultivation_bp.route('/<int:cultivation_id>/submit-harvest', methods=['GET', 'POST'])
 @login_required
 def submit_harvest(cultivation_id):
-    """Submit harvest for sale with admin approval."""
+    """Submit harvest for sale with admin-controlled pricing."""
     from app.models import HarvestSale, Notification
     
     cultivation = Cultivation.query.filter_by(
@@ -765,16 +769,22 @@ def submit_harvest(cultivation_id):
         flash('Harvest already submitted for this cultivation. Contact admin to modify.', 'info')
         return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
     
+    # Get admin-set price for this crop, district, and harvest date
+    district = cultivation.land.district or 'Other'
+    harvest_date = cultivation.actual_harvest_date or date.today()
+    admin_price = get_crop_price(cultivation.crop_name, district, harvest_date)
+    
     if request.method == 'POST':
         actual_yield = request.form.get('actual_yield')
         selling_quantity = request.form.get('selling_quantity')
-        selling_price = request.form.get('selling_price_expectation')
         contact_number = request.form.get('contact_number')
         photos = request.form.get('photos')  # JSON or comma-separated URLs
         
         if not actual_yield or not selling_quantity:
             flash('Please provide actual yield and selling quantity.', 'error')
-            return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+            return render_template('cultivation/submit_harvest.html', 
+                                   cultivation=cultivation,
+                                   admin_price=admin_price)
         
         actual_yield = float(actual_yield)
         selling_quantity = float(selling_quantity)
@@ -783,21 +793,35 @@ def submit_harvest(cultivation_id):
         if cultivation.max_allowed_sale_quantity:
             if selling_quantity > cultivation.max_allowed_sale_quantity:
                 flash(f'Selling quantity cannot exceed {cultivation.max_allowed_sale_quantity} {cultivation.yield_unit} (based on allocated area).', 'error')
-                return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+                return render_template('cultivation/submit_harvest.html', 
+                                       cultivation=cultivation,
+                                       admin_price=admin_price)
         
         # Validate selling quantity against actual yield (with tolerance)
         if selling_quantity > actual_yield * (1 + HARVEST_QUANTITY_TOLERANCE):
             flash(f'Selling quantity cannot exceed actual yield ({actual_yield} {cultivation.yield_unit}) plus {HARVEST_QUANTITY_TOLERANCE*100}% tolerance.', 'error')
-            return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+            return render_template('cultivation/submit_harvest.html', 
+                                   cultivation=cultivation,
+                                   admin_price=admin_price)
         
-        # Create harvest sale submission
+        # Use admin-set price if available, otherwise allow farmer expectation
+        selling_price = None
+        if admin_price:
+            selling_price = admin_price.price_per_unit
+        else:
+            # Allow farmer to set expectation if no admin price available
+            selling_price_input = request.form.get('selling_price_expectation')
+            if selling_price_input:
+                selling_price = float(selling_price_input)
+        
+        # Create harvest sale submission with admin price
         harvest_sale = HarvestSale(
             cultivation_id=cultivation_id,
             user_id=current_user.id,
             actual_yield_quantity=actual_yield,
             yield_unit=cultivation.yield_unit,
             selling_quantity=selling_quantity,
-            selling_price_expectation=float(selling_price) if selling_price else None,
+            selling_price_expectation=selling_price,
             contact_number=contact_number or current_user.mobile,
             photos=photos,
             status='pending'
@@ -826,4 +850,6 @@ def submit_harvest(cultivation_id):
         flash('Harvest submitted for admin approval!', 'success')
         return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
     
-    return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+    return render_template('cultivation/submit_harvest.html', 
+                           cultivation=cultivation,
+                           admin_price=admin_price)

@@ -52,89 +52,72 @@
             </div>
             
             <div class="form-group">
+                <label class="form-label" for="area_to_use">Area to Cultivate (acres) *</label>
+                <input type="number" id="area_to_use" name="area_to_use" class="form-control" 
+                       step="0.01" min="0.01" placeholder="Enter cultivation area" required>
+                <small class="form-text text-muted">Area must be within admin-set limits for your region</small>
+            </div>
+            
+            <div class="form-group">
                 <label class="form-label" for="notes">Notes</label>
                 <textarea id="notes" name="notes" class="form-control" 
                           placeholder="Any additional notes..."></textarea>
             </div>
             
-            <div class="flex gap-10">
-                <button type="submit" name="get_recommendations" value="1" class="btn btn-secondary btn-large">
-                    <i class="fas fa-robot"></i> Get AI Recommendations
-                </button>
-                <button type="submit" name="save_cultivation" value="1" class="btn btn-primary btn-large">
-                    <i class="fas fa-play"></i> Start Cultivation
-                </button>
-            </div>
+            <button type="submit" name="save_cultivation" value="1" class="btn btn-primary btn-large">
+                <i class="fas fa-play"></i> Start Cultivation
+            </button>
         </form>
     </div>
     
     <div class="card">
         <h3 class="card-title mb-20">
-            <i class="fas fa-robot"></i> AI Advisory Suggestions
+            <i class="fas fa-info-circle"></i> Cultivation Limits & Pricing
         </h3>
         
-        {% if recommendations %}
-        <div class="recommendations">
-            <div class="recommendation-section">
-                <h5><i class="fas fa-leaf"></i> Suitable Crops for Your Soil</h5>
+        {% if quota_check %}
+            {% if quota_check.allowed %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ quota_check.message }}</span>
+                </div>
+            {% else %}
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>{{ quota_check.message }}</span>
+                </div>
+            {% endif %}
+            
+            {% if quota_check.quota %}
+            <div class="info-section">
+                <h5><i class="fas fa-chart-bar"></i> Quota Information</h5>
                 <ul>
-                    {% for crop in recommendations.suitable_crops %}
-                    <li>{{ crop }}</li>
-                    {% endfor %}
+                    <li><strong>Total Allowed:</strong> {{ quota_check.quota.total_allowed_area }} {{ quota_check.quota.area_unit }}</li>
+                    <li><strong>Already Allocated:</strong> {{ quota_check.quota.allocated_area }} {{ quota_check.quota.area_unit }}</li>
+                    <li><strong>Remaining:</strong> {{ quota_check.quota.remaining_area() }} {{ quota_check.quota.area_unit }}</li>
+                    {% if quota_check.quota.max_per_farmer %}
+                    <li><strong>Max Per Farmer:</strong> {{ quota_check.quota.max_per_farmer }} {{ quota_check.quota.area_unit }}</li>
+                    {% endif %}
+                    {% if quota_check.quota.harvest_season_start and quota_check.quota.harvest_season_end %}
+                    <li><strong>Harvest Season:</strong> {{ quota_check.quota.harvest_season_start.strftime('%b %d, %Y') }} - {{ quota_check.quota.harvest_season_end.strftime('%b %d, %Y') }}</li>
+                    {% endif %}
                 </ul>
             </div>
-            
-            <div class="recommendation-section">
-                <h5><i class="fas fa-calendar-alt"></i> Best Cultivation Time</h5>
-                <p>{{ recommendations.cultivation_time }}</p>
-            </div>
-            
-            <div class="recommendation-section">
-                <h5><i class="fas fa-tasks"></i> Crop Management Steps</h5>
-                <ul>
-                    {% for step in recommendations.management_steps %}
-                    <li>{{ step }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            
-            <div class="recommendation-section">
-                <h5><i class="fas fa-flask"></i> Nutrient & Fertilizer Guidance</h5>
-                <ul>
-                    {% for item in recommendations.nutrient_guidance %}
-                    <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            
-            <div class="recommendation-section">
-                <h5><i class="fas fa-chart-line"></i> Price Trends & Tips</h5>
-                <ul>
-                    {% for item in recommendations.price_trends %}
-                    <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            
-            <div class="recommendation-section">
-                <h5><i class="fas fa-th-large"></i> Land Usage Suggestions</h5>
-                <ul>
-                    {% for item in recommendations.land_usage %}
-                    <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        
-        <div class="alert alert-warning mt-20">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>These are advisory suggestions only. Actual results may vary based on local conditions.</span>
-        </div>
+            {% endif %}
         {% else %}
         <div class="empty-state">
-            <i class="fas fa-robot"></i>
-            <h3>Get AI Recommendations</h3>
-            <p>Select a land and click "Get AI Recommendations" to receive personalized crop suggestions based on your soil type, climate, and land details.</p>
+            <i class="fas fa-info-circle"></i>
+            <h3>Admin-Controlled Cultivation</h3>
+            <p>Cultivation areas and prices are managed by administrators based on regional demand and market conditions. Fill in the cultivation details and submit to check availability.</p>
+            <div class="mt-20">
+                <h5><i class="fas fa-check-circle"></i> What You Get:</h5>
+                <ul class="text-left">
+                    <li>Cultivation within admin-approved limits</li>
+                    <li>Automatic price setting based on harvest period</li>
+                    <li>Fair pricing for your area and season</li>
+                    <li>Quota tracking and availability</li>
+                </ul>
+            </div>
         </div>
         {% endif %}
     </div>
