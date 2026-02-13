@@ -76,7 +76,7 @@
                        {% if admin_price %}value="{{ admin_price.price_per_unit }}" readonly{% endif %}>
                 <p class="form-help">
                     {% if admin_price %}
-                        <strong style="color: #27ae60;">
+                        <strong class="text-success">
                             <i class="fas fa-check-circle"></i> 
                             Admin has set the price at ₹{{ admin_price.price_per_unit }}/{{ admin_price.unit }} for this period
                         </strong>
@@ -84,7 +84,7 @@
                             <br><small>Valid from {{ admin_price.valid_from.strftime('%d-%b-%Y') }} to {{ admin_price.valid_to.strftime('%d-%b-%Y') }}</small>
                         {% endif %}
                     {% else %}
-                        <strong style="color: #e67e22;">
+                        <strong class="text-warning">
                             <i class="fas fa-exclamation-circle"></i> 
                             No admin price set for this period. Enter your expected price.
                         </strong>

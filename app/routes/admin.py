@@ -191,7 +191,7 @@ def prices():
 def add_price():
     """Add new crop price with period validity."""
     if request.method == 'POST':
-        # Handle date fields
+        # Handle date fields with validation
         valid_from_str = request.form.get('valid_from')
         valid_to_str = request.form.get('valid_to')
         
@@ -202,13 +202,32 @@ def add_price():
             try:
                 valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
             except ValueError:
-                pass
+                flash('Invalid "Valid From" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/add_price.html',
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
         
         if valid_to_str:
             try:
                 valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
             except ValueError:
-                pass
+                flash('Invalid "Valid To" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/add_price.html',
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
+        
+        # Validate date range
+        if valid_from and valid_to and valid_from > valid_to:
+            flash('"Valid From" date cannot be after "Valid To" date.', 'error')
+            return render_template(
+                'admin/add_price.html',
+                districts=TAMIL_NADU_DISTRICTS,
+                crops=COMMON_CROPS
+            )
         
         crop_price = CropPrice(
             crop_name=request.form.get('crop_name'),
@@ -241,7 +260,7 @@ def edit_price(price_id):
     crop_price = CropPrice.query.get_or_404(price_id)
     
     if request.method == 'POST':
-        # Handle date fields
+        # Handle date fields with validation
         valid_from_str = request.form.get('valid_from')
         valid_to_str = request.form.get('valid_to')
         
@@ -249,7 +268,13 @@ def edit_price(price_id):
             try:
                 crop_price.valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
             except ValueError:
-                crop_price.valid_from = None
+                flash('Invalid "Valid From" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/edit_price.html',
+                    price=crop_price,
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
         else:
             crop_price.valid_from = None
         
@@ -257,9 +282,25 @@ def edit_price(price_id):
             try:
                 crop_price.valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
             except ValueError:
-                crop_price.valid_to = None
+                flash('Invalid "Valid To" date format. Please use YYYY-MM-DD format.', 'error')
+                return render_template(
+                    'admin/edit_price.html',
+                    price=crop_price,
+                    districts=TAMIL_NADU_DISTRICTS,
+                    crops=COMMON_CROPS
+                )
         else:
             crop_price.valid_to = None
+        
+        # Validate date range
+        if crop_price.valid_from and crop_price.valid_to and crop_price.valid_from > crop_price.valid_to:
+            flash('"Valid From" date cannot be after "Valid To" date.', 'error')
+            return render_template(
+                'admin/edit_price.html',
+                price=crop_price,
+                districts=TAMIL_NADU_DISTRICTS,
+                crops=COMMON_CROPS
+            )
         
         crop_price.crop_name = request.form.get('crop_name', crop_price.crop_name)
         crop_price.crop_type = request.form.get('crop_type', crop_price.crop_type)
