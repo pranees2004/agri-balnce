@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Harvest - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Submit Harvest for Sale</h1>
+    <a href="{{ url_for('cultivation.view_cultivation', cultivation_id=cultivation.id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <h3>Cultivation Details</h3>
+    <div class="info-grid">
+        <div>
+            <label>Approval ID:</label>
+            <p><code>{{ cultivation.cultivation_approval_id }}</code></p>
+        </div>
+        <div>
+            <label>Crop:</label>
+            <p><strong>{{ cultivation.crop_name }}</strong></p>
+        </div>
+        <div>
+            <label>Cultivated Area:</label>
+            <p>{{ cultivation.area_used }} acres</p>
+        </div>
+        <div>
+            <label>Estimated Yield:</label>
+            <p>{{ cultivation.estimated_yield or 'N/A' }} {{ cultivation.yield_unit }}</p>
+        </div>
+        {% if cultivation.max_allowed_sale_quantity %}
+        <div>
+            <label>Max Allowed Sale Quantity:</label>
+            <p><strong>{{ cultivation.max_allowed_sale_quantity }} {{ cultivation.yield_unit }}</strong></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h3>Submit Harvest Information</h3>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="actual_yield">Actual Yield Quantity ({{ cultivation.yield_unit }}) *</label>
+                <input type="number" id="actual_yield" name="actual_yield" class="form-control" 
+                       step="0.01" min="0" required value="{{ cultivation.actual_yield or '' }}">
+                <p class="form-help">Total quantity harvested from your cultivation</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="selling_quantity">Selling Quantity ({{ cultivation.yield_unit }}) *</label>
+                <input type="number" id="selling_quantity" name="selling_quantity" class="form-control" 
+                       step="0.01" min="0" required 
+                       {% if cultivation.max_allowed_sale_quantity %}max="{{ cultivation.max_allowed_sale_quantity }}"{% endif %}>
+                <p class="form-help">
+                    {% if cultivation.max_allowed_sale_quantity %}
+                        Maximum allowed: {{ cultivation.max_allowed_sale_quantity }} {{ cultivation.yield_unit }}
+                    {% else %}
+                        Quantity you want to sell
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="selling_price_expectation">Price Expectation (₹ per {{ cultivation.yield_unit }})</label>
+                <input type="number" id="selling_price_expectation" name="selling_price_expectation" 
+                       class="form-control" step="0.01" min="0">
+                <p class="form-help">Your expected selling price (optional)</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="contact_number">Contact Number</label>
+                <input type="tel" id="contact_number" name="contact_number" class="form-control" 
+                       value="{{ current_user.mobile or '' }}" pattern="[0-9]{10}">
+                <p class="form-help">Your contact number for buyers</p>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="photos">Photo URLs (Optional)</label>
+            <textarea id="photos" name="photos" class="form-control" rows="2" 
+                      placeholder="Enter photo URLs separated by commas"></textarea>
+            <p class="form-help">Upload harvest photos to cloud storage and paste URLs here</p>
+        </div>
+        
+        <div class="alert alert-info mt-20">
+            <i class="fas fa-info-circle"></i>
+            <strong>Note:</strong> Your harvest submission will be sent to admin for approval. 
+            You will be notified once reviewed.
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('cultivation.view_cultivation', cultivation_id=cultivation.id) }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Submit for Approval
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.info-grid label {
+    font-weight: 500;
+    color: #7f8c8d;
+    font-size: 0.875rem;
+}
+
+.info-grid p {
+    margin-top: 0.25rem;
+    font-size: 1rem;
+}
+
+.alert-info {
+    background-color: #e8f4f8;
+    border-left: 4px solid #3498db;
+    padding: 1rem;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}

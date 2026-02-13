@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Quotas - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Cultivation Quotas</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+        <a href="{{ url_for('admin.add_quota') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Quota
+        </a>
+    </div>
+</div>
+
+{% if quotas %}
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Crop</th>
+                <th>Total Area</th>
+                <th>Allocated</th>
+                <th>Remaining</th>
+                <th>Utilization</th>
+                <th>Season</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quota in quotas %}
+            <tr>
+                <td>
+                    {% if quota.village %}{{ quota.village }}, {% endif %}
+                    {% if quota.taluk %}{{ quota.taluk }}, {% endif %}
+                    {% if quota.district %}{{ quota.district }}, {% endif %}
+                    {% if quota.state %}{{ quota.state }}, {% endif %}
+                    {{ quota.country }}
+                </td>
+                <td><strong>{{ quota.crop_name }}</strong></td>
+                <td>{{ quota.total_allowed_area }} {{ quota.area_unit }}</td>
+                <td>{{ quota.allocated_area }} {{ quota.area_unit }}</td>
+                <td>{{ quota.remaining_area() }} {{ quota.area_unit }}</td>
+                <td>
+                    {% set utilization = (quota.allocated_area / quota.total_allowed_area * 100) if quota.total_allowed_area > 0 else 0 %}
+                    <span class="badge badge-{{ 'error' if utilization > 90 else ('warning' if utilization > 75 else 'success') }}">
+                        {{ "%.1f"|format(utilization) }}%
+                    </span>
+                </td>
+                <td>
+                    {% if quota.harvest_season_start %}
+                        {{ quota.harvest_season_start.strftime('%b %Y') }} - {{ quota.harvest_season_end.strftime('%b %Y') if quota.harvest_season_end else 'Ongoing' }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge badge-{{ 'success' if quota.is_active else 'error' }}">
+                        {{ 'Active' if quota.is_active else 'Inactive' }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.edit_quota', quota_id=quota.id) }}" class="btn btn-sm">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_quota', quota_id=quota.id) }}" style="display: inline;" 
+                          onsubmit="return confirm('Are you sure you want to delete this quota?');">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card text-center">
+    <i class="fas fa-ruler fa-3x" style="opacity: 0.3; margin-bottom: 1rem;"></i>
+    <h3>No Quotas Set</h3>
+    <p>Add cultivation quotas to control crop production by location and season.</p>
+    <a href="{{ url_for('admin.add_quota') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add First Quota
+    </a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}View Harvest Sale - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Harvest Sale Details</h1>
+    <a href="{{ url_for('admin.harvest_sales') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="grid-2">
+    <!-- Farmer & Cultivation Info -->
+    <div class="card">
+        <h3>Farmer Information</h3>
+        <div class="info-grid">
+            <div>
+                <label>Name:</label>
+                <p><strong>{{ sale.farmer.name }}</strong></p>
+            </div>
+            <div>
+                <label>Contact:</label>
+                <p>{{ sale.contact_number or sale.farmer.mobile }}</p>
+            </div>
+            <div>
+                <label>Location:</label>
+                <p>{{ sale.cultivation.land.village }}, {{ sale.cultivation.land.district }}</p>
+            </div>
+            {% if sale.cultivation.land.latitude and sale.cultivation.land.longitude %}
+            <div>
+                <label>GPS:</label>
+                <p>{{ sale.cultivation.land.latitude }}, {{ sale.cultivation.land.longitude }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <h3 class="mt-20">Cultivation Details</h3>
+        <div class="info-grid">
+            <div>
+                <label>Approval ID:</label>
+                <p><code>{{ sale.cultivation.cultivation_approval_id }}</code></p>
+            </div>
+            <div>
+                <label>Crop:</label>
+                <p><strong>{{ sale.cultivation.crop_name }}</strong></p>
+            </div>
+            <div>
+                <label>Cultivated Area:</label>
+                <p>{{ sale.cultivation.area_used }} acres</p>
+            </div>
+            <div>
+                <label>Max Allowed Sale:</label>
+                <p>{{ sale.cultivation.max_allowed_sale_quantity or 'N/A' }} {{ sale.yield_unit }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Harvest Details -->
+    <div class="card">
+        <h3>Harvest Details</h3>
+        <div class="info-grid">
+            <div>
+                <label>Actual Yield:</label>
+                <p><strong>{{ sale.actual_yield_quantity }} {{ sale.yield_unit }}</strong></p>
+            </div>
+            <div>
+                <label>Selling Quantity:</label>
+                <p><strong>{{ sale.selling_quantity }} {{ sale.yield_unit }}</strong></p>
+            </div>
+            <div>
+                <label>Price Expectation:</label>
+                <p>{{ '₹%.2f'|format(sale.selling_price_expectation) if sale.selling_price_expectation else 'N/A' }}</p>
+            </div>
+            <div>
+                <label>Status:</label>
+                <p>
+                    <span class="badge badge-{{ 'warning' if sale.status == 'pending' else ('success' if sale.status == 'approved' else 'error') }}">
+                        {{ sale.status.title() }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        
+        {% if sale.approved_quantity %}
+        <div class="mt-20">
+            <label>Approved Quantity:</label>
+            <p><strong>{{ sale.approved_quantity }} {{ sale.yield_unit }}</strong></p>
+        </div>
+        {% endif %}
+        
+        {% if sale.admin_notes %}
+        <div class="mt-20">
+            <label>Admin Notes:</label>
+            <p>{{ sale.admin_notes }}</p>
+        </div>
+        {% endif %}
+        
+        {% if sale.reviewed_by %}
+        <div class="mt-20">
+            <label>Reviewed By:</label>
+            <p>{{ sale.reviewer.name }} on {{ sale.reviewed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if sale.status == 'pending' %}
+<div class="card mt-20">
+    <h3>Review Actions</h3>
+    
+    <form method="POST" action="{{ url_for('admin.approve_harvest_sale', sale_id=sale.id) }}" class="mb-20">
+        <h4>Approve Harvest Sale</h4>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="approved_quantity">Approved Quantity ({{ sale.yield_unit }})</label>
+                <input type="number" id="approved_quantity" name="approved_quantity" class="form-control" 
+                       step="0.01" value="{{ sale.selling_quantity }}" required>
+                <p class="form-help">Adjust if needed (max: {{ sale.selling_quantity }})</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="admin_notes">Notes (Optional)</label>
+                <textarea id="admin_notes" name="admin_notes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-check"></i> Approve
+        </button>
+    </form>
+    
+    <form method="POST" action="{{ url_for('admin.reject_harvest_sale', sale_id=sale.id) }}" 
+          onsubmit="return confirm('Are you sure you want to reject this harvest sale?');">
+        <h4>Reject Harvest Sale</h4>
+        <div class="form-group">
+            <label class="form-label" for="admin_notes">Reason for Rejection *</label>
+            <textarea id="admin_notes" name="admin_notes" class="form-control" rows="3" required></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-times"></i> Reject
+        </button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}
