@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Cultivation History - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Cultivation History</h1>
+    <a href="{{ url_for('cultivation.list_cultivations') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> All Cultivations
+    </a>
+</div>
+
+{% if cultivations %}
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Crop</th>
+                    <th>Land</th>
+                    <th>Status</th>
+                    <th>Harvest Date</th>
+                    <th>Yield</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cultivation in cultivations %}
+                <tr>
+                    <td>
+                        <strong>{{ cultivation.crop_name }}</strong>
+                        {% if cultivation.variety %}<br><small>{{ cultivation.variety }}</small>{% endif %}
+                    </td>
+                    <td>{{ cultivation.land.name }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if cultivation.status == 'harvested' else 'error' }}">
+                            {{ cultivation.status.title() }}
+                        </span>
+                    </td>
+                    <td>{{ cultivation.actual_harvest_date.strftime('%d %b %Y') if cultivation.actual_harvest_date else '-' }}</td>
+                    <td>{{ cultivation.actual_yield or '-' }} {{ cultivation.yield_unit if cultivation.actual_yield else '' }}</td>
+                    <td>
+                        <a href="{{ url_for('cultivation.view_cultivation', cultivation_id=cultivation.id) }}" class="btn btn-outline btn-icon">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-history"></i>
+        <h3>No cultivation history</h3>
+        <p>Completed cultivations will appear here</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

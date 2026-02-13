@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ listing.crop_name }} - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ listing.crop_name }}</h1>
+    <a href="{{ url_for('selling.marketplace') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Marketplace
+    </a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="product-image" style="height: 250px; border-radius: var(--border-radius); margin-bottom: 20px;">
+            <i class="fas fa-wheat-awn"></i>
+        </div>
+        
+        {% if listing.is_organic %}
+        <span class="badge badge-success mb-10">Organic</span>
+        {% endif %}
+        
+        <span class="badge badge-{{ 'success' if listing.status == 'available' else 'info' }}">
+            {{ listing.status.title() }}
+        </span>
+    </div>
+    
+    <div class="card">
+        <h2 class="mb-10">{{ listing.crop_name }}</h2>
+        {% if listing.variety %}
+        <p class="text-secondary mb-20">{{ listing.variety }}</p>
+        {% endif %}
+        
+        <div class="product-price mb-20" style="font-size: 2rem;">
+            ₹{{ listing.price_per_unit }}<span style="font-size: 1rem; color: var(--text-secondary);">/{{ listing.quantity_unit }}</span>
+        </div>
+        
+        <div class="list-item">
+            <span>Quantity Available</span>
+            <strong>{{ listing.quantity }} {{ listing.quantity_unit }}</strong>
+        </div>
+        
+        <div class="list-item">
+            <span>Total Value</span>
+            <strong>₹{{ (listing.quantity * listing.price_per_unit)|round(2) }}</strong>
+        </div>
+        
+        <div class="list-item">
+            <span>Location</span>
+            <strong>{{ listing.location or 'Not specified' }}</strong>
+        </div>
+        
+        <div class="list-item">
+            <span>Seller</span>
+            <strong>{{ listing.seller.name }}</strong>
+        </div>
+        
+        <div class="list-item">
+            <span>Listed On</span>
+            <strong>{{ listing.created_at.strftime('%d %B %Y') }}</strong>
+        </div>
+        
+        {% if listing.description %}
+        <div class="mt-20">
+            <h4>Description</h4>
+            <p>{{ listing.description }}</p>
+        </div>
+        {% endif %}
+        
+        {% if listing.status == 'available' %}
+        <div class="mt-20">
+            <a href="tel:{{ listing.seller.mobile }}" class="btn btn-primary btn-large btn-block">
+                <i class="fas fa-phone"></i> Contact Seller
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

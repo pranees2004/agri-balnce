@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Crop Prices - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Crop Prices</h1>
+    <a href="{{ url_for('admin.add_price') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Price
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Crop Name</th>
+                    <th>Type</th>
+                    <th>District</th>
+                    <th>Price/Unit</th>
+                    <th>Units Sold</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for price in prices %}
+                <tr>
+                    <td>{{ price.crop_name }}</td>
+                    <td>{{ price.crop_type or '-' }}</td>
+                    <td>{{ price.district }}</td>
+                    <td>₹{{ price.price_per_unit }}/{{ price.unit }}</td>
+                    <td>{{ price.units_sold }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if price.is_active else 'error' }}">
+                            {{ 'Active' if price.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_price', price_id=price.id) }}" class="btn btn-outline btn-icon">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin.delete_price', price_id=price.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-icon" onclick="return confirm('Delete this price?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No crop prices set. <a href="{{ url_for('admin.add_price') }}">Add one</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Government Schemes - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Government Schemes</h1>
+    <a href="{{ url_for('news.news_list') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> All News
+    </a>
+</div>
+
+{% if articles %}
+<div class="grid-2">
+    {% for article in articles %}
+    <div class="card">
+        <span class="news-category">Government Scheme</span>
+        <h3 class="mt-10">{{ article.title }}</h3>
+        {% if article.summary %}
+        <p class="text-secondary mt-10">{{ article.summary }}</p>
+        {% endif %}
+        <p class="news-date mt-10">Published: {{ article.published_at.strftime('%d %B %Y') }}</p>
+        {% if article.source %}
+        <p class="text-secondary">Source: {{ article.source }}</p>
+        {% endif %}
+        <a href="{{ url_for('news.view_article', article_id=article.id) }}" class="btn btn-primary mt-20">
+            Learn More
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-landmark"></i>
+        <h3>No schemes available</h3>
+        <p>Check back later for government scheme updates</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

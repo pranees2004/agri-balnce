@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ product.name }}</h1>
+    <a href="{{ url_for('ecommerce.products') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Products
+    </a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="product-image" style="height: 300px; border-radius: var(--border-radius);">
+            {% if product.category == 'seeds' %}
+            <i class="fas fa-seedling"></i>
+            {% elif product.category == 'fertilizers' %}
+            <i class="fas fa-flask"></i>
+            {% elif product.category == 'pesticides' %}
+            <i class="fas fa-spray-can"></i>
+            {% elif product.category == 'machinery' %}
+            <i class="fas fa-tractor"></i>
+            {% else %}
+            <i class="fas fa-tools"></i>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <span class="badge badge-info mb-10">{{ product.category.title() }}</span>
+        <h2>{{ product.name }}</h2>
+        {% if product.brand %}
+        <p class="text-secondary mb-20">{{ product.brand }}</p>
+        {% endif %}
+        
+        <p class="product-price" style="font-size: 2rem;">₹{{ product.price }}{% if product.unit %}<span style="font-size: 1rem;">/{{ product.unit }}</span>{% endif %}</p>
+        
+        <div class="list-item">
+            <span>Availability</span>
+            <strong class="{{ 'text-success' if product.stock > 0 else 'text-error' }}">
+                {{ product.stock }} in stock
+            </strong>
+        </div>
+        
+        {% if product.description %}
+        <div class="mt-20">
+            <h4>Description</h4>
+            <p>{{ product.description }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="mt-20">
+            <button class="btn btn-primary btn-large btn-block" {{ 'disabled' if product.stock == 0 else '' }}>
+                <i class="fas fa-shopping-cart"></i> Contact to Buy
+            </button>
+            <p class="text-secondary text-center mt-10">Contact admin to purchase this product</p>
+        </div>
+    </div>
+</div>
+
+{% if related_products %}
+<div class="card mt-20">
+    <h3 class="card-title mb-20">Related Products</h3>
+    <div class="grid-3">
+        {% for product in related_products %}
+        <div class="product-card">
+            <div class="product-image" style="height: 120px;">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="product-info">
+                <h4>{{ product.name }}</h4>
+                <p class="product-price">₹{{ product.price }}</p>
+                <a href="{{ url_for('ecommerce.product_detail', product_id=product.id) }}" class="btn btn-outline btn-block">
+                    View
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

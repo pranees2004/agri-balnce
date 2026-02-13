@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Add Crop Price - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add Crop Price</h1>
+    <a href="{{ url_for('admin.prices') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <select id="crop_name" name="crop_name" class="form-control" required>
+                    <option value="">Select Crop</option>
+                    {% for crop in crops %}
+                    <option value="{{ crop }}">{{ crop }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="crop_type">Crop Type</label>
+                <select id="crop_type" name="crop_type" class="form-control">
+                    <option value="">Select Type</option>
+                    <option value="fruit">Fruit</option>
+                    <option value="vegetable">Vegetable</option>
+                    <option value="grain">Grain</option>
+                    <option value="pulse">Pulse</option>
+                    <option value="spice">Spice</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="district">District *</label>
+                <select id="district" name="district" class="form-control" required>
+                    <option value="">Select District</option>
+                    {% for district in districts %}
+                    <option value="{{ district }}">{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="price_per_unit">Price Per Unit (₹) *</label>
+                <input type="number" id="price_per_unit" name="price_per_unit" class="form-control" 
+                       step="0.01" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="unit">Unit</label>
+                <select id="unit" name="unit" class="form-control">
+                    <option value="kg">Kilogram (kg)</option>
+                    <option value="quintal">Quintal</option>
+                    <option value="ton">Ton</option>
+                    <option value="piece">Piece</option>
+                    <option value="dozen">Dozen</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_active" checked> Active
+                </label>
+            </div>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.prices') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Price
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

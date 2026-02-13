@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - AgriBalance Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add Product</h1>
+    <a href="{{ url_for('admin.products') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('admin.add_product') }}">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="name">Product Name *</label>
+                <input type="text" id="name" name="name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="category">Category *</label>
+                <select id="category" name="category" class="form-control" required>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="price">Price (₹) *</label>
+                <input type="number" id="price" name="price" class="form-control" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="stock">Stock Quantity *</label>
+                <input type="number" id="stock" name="stock" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="unit">Unit</label>
+                <input type="text" id="unit" name="unit" class="form-control" placeholder="e.g., kg, liters, pieces">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="brand">Brand</label>
+                <input type="text" id="brand" name="brand" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_active" checked style="width: auto; margin-right: 10px;">
+                    Active (visible to users)
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" name="description" class="form-control"></textarea>
+        </div>
+        
+        <div class="flex-between">
+            <a href="{{ url_for('admin.products') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-plus"></i> Add Product
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="dashboard-header compact">
+    <h1>Welcome, {{ current_user.name }}! 👋</h1>
+</div>
+
+<!-- Stats - Compact -->
+<div class="stats-grid compact">
+    <div class="stat-card compact">
+        <div class="stat-icon lands">
+            <i class="fas fa-map"></i>
+        </div>
+        <div class="stat-info">
+            <h4>{{ lands_count }}</h4>
+            <p>Total Lands</p>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('cultivation.active_cultivations') }}" class="stat-card compact clickable">
+        <div class="stat-icon cultivations">
+            <i class="fas fa-seedling"></i>
+        </div>
+        <div class="stat-info">
+            <h4>{{ active_cultivations }}</h4>
+            <p>Active Cultivations</p>
+        </div>
+    </a>
+    
+    <div class="stat-card compact">
+        <div class="stat-icon listings">
+            <i class="fas fa-store"></i>
+        </div>
+        <div class="stat-info">
+            <h4>{{ active_listings }}</h4>
+            <p>Crop Listings</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions - Compact -->
+<div class="quick-actions compact">
+    <a href="{{ url_for('land.add_land') }}" class="action-card compact">
+        <i class="fas fa-map-marked-alt"></i>
+        <h3>Add Land</h3>
+    </a>
+    
+    <a href="{{ url_for('cultivation.start_cultivation') }}" class="action-card compact">
+        <i class="fas fa-tractor"></i>
+        <h3>Start Cultivation</h3>
+    </a>
+    
+    <a href="{{ url_for('selling.marketplace') }}" class="action-card compact">
+        <i class="fas fa-store"></i>
+        <h3>Sell Crops</h3>
+    </a>
+    
+    <a href="{{ url_for('ecommerce.products') }}" class="action-card compact">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Products</h3>
+    </a>
+</div>
+
+<!-- Crop Prices Section -->
+<div class="card compact">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-tag"></i> Today's Crop Prices</h3>
+    </div>
+    <div class="crop-prices-grid">
+        {% if crop_prices %}
+            {% for price in crop_prices[:8] %}
+            <div class="price-item">
+                <span class="crop-name">{{ price.crop_name }}</span>
+                <span class="crop-price">₹{{ price.price_per_unit }}/{{ price.unit }}</span>
+                <span class="crop-district">{{ price.district }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-secondary">No prices available. Contact admin.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

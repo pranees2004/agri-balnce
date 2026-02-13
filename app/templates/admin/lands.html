@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}All Lands - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">All Lands</h1>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Land Name</th>
+                    <th>Owner</th>
+                    <th>District</th>
+                    <th>Size</th>
+                    <th>Soil Type</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for land in lands %}
+                <tr>
+                    <td>{{ land.name }}</td>
+                    <td>{{ land.owner.name }}</td>
+                    <td>{{ land.district or land.state or '-' }}</td>
+                    <td>{{ land.land_size }} {{ land.land_size_unit }}</td>
+                    <td>{{ land.soil_type or '-' }}</td>
+                    <td>{{ land.created_at.strftime('%d %b %Y') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No lands registered yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

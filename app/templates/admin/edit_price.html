@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Crop Price - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Crop Price</h1>
+    <a href="{{ url_for('admin.prices') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <select id="crop_name" name="crop_name" class="form-control" required>
+                    {% for crop in crops %}
+                    <option value="{{ crop }}" {{ 'selected' if crop == price.crop_name else '' }}>{{ crop }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="crop_type">Crop Type</label>
+                <select id="crop_type" name="crop_type" class="form-control">
+                    <option value="">Select Type</option>
+                    <option value="fruit" {{ 'selected' if price.crop_type == 'fruit' else '' }}>Fruit</option>
+                    <option value="vegetable" {{ 'selected' if price.crop_type == 'vegetable' else '' }}>Vegetable</option>
+                    <option value="grain" {{ 'selected' if price.crop_type == 'grain' else '' }}>Grain</option>
+                    <option value="pulse" {{ 'selected' if price.crop_type == 'pulse' else '' }}>Pulse</option>
+                    <option value="spice" {{ 'selected' if price.crop_type == 'spice' else '' }}>Spice</option>
+                    <option value="other" {{ 'selected' if price.crop_type == 'other' else '' }}>Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="district">District *</label>
+                <select id="district" name="district" class="form-control" required>
+                    {% for district in districts %}
+                    <option value="{{ district }}" {{ 'selected' if district == price.district else '' }}>{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="price_per_unit">Price Per Unit (₹) *</label>
+                <input type="number" id="price_per_unit" name="price_per_unit" class="form-control" 
+                       step="0.01" min="0" value="{{ price.price_per_unit }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="unit">Unit</label>
+                <select id="unit" name="unit" class="form-control">
+                    <option value="kg" {{ 'selected' if price.unit == 'kg' else '' }}>Kilogram (kg)</option>
+                    <option value="quintal" {{ 'selected' if price.unit == 'quintal' else '' }}>Quintal</option>
+                    <option value="ton" {{ 'selected' if price.unit == 'ton' else '' }}>Ton</option>
+                    <option value="piece" {{ 'selected' if price.unit == 'piece' else '' }}>Piece</option>
+                    <option value="dozen" {{ 'selected' if price.unit == 'dozen' else '' }}>Dozen</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_active" {{ 'checked' if price.is_active else '' }}> Active
+                </label>
+            </div>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.prices') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Price
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Sell Your Crop - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Sell Your Crop</h1>
+    <a href="{{ url_for('selling.my_listings') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Listings
+    </a>
+</div>
+
+<div class="card">
+    <div class="alert alert-info mb-20">
+        <i class="fas fa-info-circle"></i>
+        <span>You can only sell crops from your own cultivations. Prices are set by the platform admin based on your region.</span>
+    </div>
+    
+    <form method="POST" action="{{ url_for('selling.add_listing') }}">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="cultivation_id">Select Cultivation *</label>
+                <select id="cultivation_id" name="cultivation_id" class="form-control" required>
+                    <option value="">Select a harvested cultivation</option>
+                    {% for cultivation in cultivations %}
+                    <option value="{{ cultivation.id }}">
+                        {{ cultivation.crop_name }} - {{ cultivation.land.name }}
+                        {% if cultivation.actual_yield %}({{ cultivation.actual_yield }} {{ cultivation.yield_unit }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="form-help">Only harvested cultivations are shown</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="quantity">Quantity to Sell *</label>
+                <input type="number" id="quantity" name="quantity" class="form-control" 
+                       placeholder="Enter quantity" step="0.1" required>
+                <p class="form-help">Cannot exceed harvested amount plus 5% tolerance</p>
+            </div>
+        </div>
+        
+        <div class="alert alert-warning mb-20">
+            <i class="fas fa-lock"></i>
+            <span><strong>Note:</strong> Price will be automatically set based on admin-defined rates for your region. You cannot manually set the price.</span>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('selling.my_listings') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-store"></i> List for Sale
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

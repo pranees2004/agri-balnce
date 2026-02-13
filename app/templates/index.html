@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}AgriBalance - Farmer's Digital Platform{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div class="welcome-logo">
+        <i class="fas fa-seedling"></i>
+        <h1>AgriBalance</h1>
+        <p>Your Digital Farming Partner</p>
+    </div>
+    
+    <!-- Language Selection -->
+    <div class="language-selector">
+        <label for="language-select"><i class="fas fa-language"></i> Select Language:</label>
+        <select id="language-select" class="form-control language-dropdown" onchange="setLanguage(this.value)">
+            <option value="en" {% if session.get('language', 'en') == 'en' %}selected{% endif %}>English</option>
+            <option value="ta" {% if session.get('language') == 'ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+            <option value="hi" {% if session.get('language') == 'hi' %}selected{% endif %}>हिंदी (Hindi)</option>
+            <option value="te" {% if session.get('language') == 'te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+            <option value="kn" {% if session.get('language') == 'kn' %}selected{% endif %}>ಕನ್ನಡ (Kannada)</option>
+            <option value="ml" {% if session.get('language') == 'ml' %}selected{% endif %}>മലയാളം (Malayalam)</option>
+        </select>
+    </div>
+    
+    <div class="welcome-buttons">
+        <a href="{{ url_for('auth.login') }}" class="btn welcome-btn welcome-btn-login">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+        <a href="{{ url_for('auth.register') }}" class="btn welcome-btn welcome-btn-register">
+            <i class="fas fa-user-plus"></i> Register
+        </a>
+    </div>
+</div>
+
+<script>
+function setLanguage(lang) {
+    fetch('/set-language/' + lang, {method: 'POST'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Language change failed:', error);
+            alert('Failed to change language. Please try again.');
+        });
+}
+</script>
+{% endblock %}

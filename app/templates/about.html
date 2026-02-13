@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}About - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="welcome-container" style="min-height: auto; padding: 60px 20px;">
+    <div class="card" style="max-width: 800px; text-align: center;">
+        <div class="welcome-logo" style="color: var(--primary-color);">
+            <i class="fas fa-seedling" style="font-size: 4rem;"></i>
+            <h1 style="font-size: 2.5rem; color: var(--primary-color);">AgriBalance</h1>
+            <p style="color: var(--text-secondary);">Your Digital Farming Partner</p>
+        </div>
+        
+        <div class="mt-20" style="text-align: left;">
+            <h3>About AgriBalance</h3>
+            <p class="mt-10">
+                AgriBalance is a comprehensive agricultural management platform designed to help farmers 
+                optimize their crop production, manage resources efficiently, and maintain sustainable 
+                farming practices through data-driven decision making.
+            </p>
+            
+            <h3 class="mt-20">Features</h3>
+            <ul style="list-style: disc; padding-left: 20px; margin-top: 10px;">
+                <li>Land Management - Register and manage your farm lands</li>
+                <li>AI-Powered Advisory - Get personalized crop recommendations</li>
+                <li>Digital Marketplace - Sell your harvested crops</li>
+                <li>E-commerce - Buy seeds, fertilizers, and machinery</li>
+                <li>Community - Connect with fellow farmers</li>
+                <li>News & Schemes - Stay updated on government programs</li>
+            </ul>
+            
+            <h3 class="mt-20">Our Mission</h3>
+            <p class="mt-10">
+                To empower farmers with intelligent tools that optimize crop yields, reduce waste, 
+                and promote environmentally friendly farming practices.
+            </p>
+        </div>
+        
+        <div class="mt-20">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-large">
+                <i class="fas fa-home"></i> Go to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

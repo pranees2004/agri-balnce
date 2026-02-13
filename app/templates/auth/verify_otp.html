@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Verify OTP - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-shield-alt"></i>
+            <h2>Verify OTP</h2>
+            <p>Enter the OTP sent to {{ mobile }}</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('auth.verify_otp') }}">
+            <div class="form-group">
+                <label class="form-label" for="otp">One Time Password (OTP)</label>
+                <input type="text" id="otp" name="otp" class="form-control" 
+                       placeholder="Enter 6-digit OTP" maxlength="6" required
+                       style="text-align: center; font-size: 1.5rem; letter-spacing: 10px;">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block btn-large">
+                <i class="fas fa-check"></i> Verify & Login
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Didn't receive OTP? <a href="{{ url_for('auth.login') }}">Try again</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Update Profile - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Update Profile</h1>
+    <a href="{{ url_for('settings.index') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Settings
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('settings.update_profile') }}">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="name">Full Name</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       value="{{ current_user.name }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" 
+                       value="{{ current_user.email or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="location">Location</label>
+                <input type="text" id="location" name="location" class="form-control" 
+                       value="{{ current_user.location or '' }}" 
+                       placeholder="Village/City, District, State">
+            </div>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('settings.index') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

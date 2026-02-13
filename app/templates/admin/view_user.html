@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - AgriBalance Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">User: {{ user.name }}</h1>
+    <a href="{{ url_for('admin.users') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3 class="card-title mb-20">User Information</h3>
+        
+        <div class="list-item">
+            <span>ID</span>
+            <strong>{{ user.id }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Name</span>
+            <strong>{{ user.name }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Mobile</span>
+            <strong>{{ user.mobile or 'Not set' }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Email</span>
+            <strong>{{ user.email or 'Not set' }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Location</span>
+            <strong>{{ user.location or 'Not set' }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Role</span>
+            <span class="badge badge-{{ 'warning' if user.is_admin else 'info' }}">
+                {{ 'Admin' if user.is_admin else 'User' }}
+            </span>
+        </div>
+        <div class="list-item">
+            <span>Joined</span>
+            <strong>{{ user.created_at.strftime('%d %B %Y') }}</strong>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="card-title mb-20">Activity Summary</h3>
+        
+        <div class="list-item">
+            <span>Total Lands</span>
+            <strong>{{ user.lands.count() }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Total Cultivations</span>
+            <strong>{{ user.cultivations.count() }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Crop Listings</span>
+            <strong>{{ user.crop_listings.count() }}</strong>
+        </div>
+        <div class="list-item">
+            <span>Community Posts</span>
+            <strong>{{ user.posts.count() }}</strong>
+        </div>
+    </div>
+</div>
+{% endblock %}

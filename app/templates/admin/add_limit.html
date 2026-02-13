@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Add Region Limit - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add Region Limit</h1>
+    <a href="{{ url_for('admin.limits') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="district">District *</label>
+                <select id="district" name="district" class="form-control" required>
+                    <option value="">Select District</option>
+                    {% for district in districts %}
+                    <option value="{{ district }}">{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <select id="crop_name" name="crop_name" class="form-control" required>
+                    <option value="">Select Crop</option>
+                    {% for crop in crops %}
+                    <option value="{{ crop }}">{{ crop }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="max_area">Maximum Area (acres) *</label>
+                <input type="number" id="max_area" name="max_area" class="form-control" 
+                       step="0.01" min="0" required>
+                <p class="form-help">Total area allowed for this crop in this region</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="max_cultivation_count">Max Farmers</label>
+                <input type="number" id="max_cultivation_count" name="max_cultivation_count" class="form-control" 
+                       min="0" value="0">
+                <p class="form-help">Maximum farmers allowed to cultivate (0 = unlimited)</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_active" checked> Active
+                </label>
+            </div>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.limits') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Limit
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

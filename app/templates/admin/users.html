@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - AgriBalance Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Manage Users</h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td><strong>{{ user.name }}</strong></td>
+                    <td>{{ user.mobile or '-' }}</td>
+                    <td>{{ user.location or '-' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'error' if user.is_suspended else 'success' }}">
+                            {{ 'Suspended' if user.is_suspended else 'Active' }}
+                        </span>
+                    </td>
+                    <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
+                    <td class="flex gap-10">
+                        <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="btn btn-outline btn-icon" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin.toggle_suspend', user_id=user.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-{{ 'success' if user.is_suspended else 'warning' }} btn-icon" 
+                                    title="{{ 'Activate' if user.is_suspended else 'Suspend' }}">
+                                <i class="fas fa-{{ 'check' if user.is_suspended else 'ban' }}"></i>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" 
+                              onsubmit="return confirm('Delete this user?');" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-icon" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No users registered yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

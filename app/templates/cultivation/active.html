@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Active Cultivations - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Active Cultivations</h1>
+    <a href="{{ url_for('cultivation.start_cultivation') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Start New
+    </a>
+</div>
+
+{% if cultivation_data %}
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Crop Name</th>
+                    <th>Area Used</th>
+                    <th>Expected Quantity</th>
+                    <th>Harvesting Date</th>
+                    <th>District</th>
+                    <th>Price/Unit</th>
+                    <th>Est. Area Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in cultivation_data %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('cultivation.view_cultivation', cultivation_id=data.cultivation.id) }}">
+                            <strong>{{ data.cultivation.crop_name }}</strong>
+                        </a>
+                        {% if data.cultivation.variety %}
+                        <br><small class="text-secondary">{{ data.cultivation.variety }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ data.cultivation.area_used or data.cultivation.land.land_size }} {{ data.cultivation.land.land_size_unit or 'acres' }}</td>
+                    <td>{{ data.cultivation.estimated_yield or '-' }} {{ data.cultivation.yield_unit }}</td>
+                    <td>
+                        {% if data.cultivation.expected_harvest_date %}
+                            {{ data.cultivation.expected_harvest_date.strftime('%d %b %Y') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ data.district }}</td>
+                    <td>
+                        {% if data.price_per_unit > 0 %}
+                            ₹{{ data.price_per_unit }}/{{ data.price_unit }}
+                        {% else %}
+                            <span class="text-secondary">Not set</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if data.area_value > 0 %}
+                            <strong class="text-success">₹{{ "%.2f"|format(data.area_value) }}</strong>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-20">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-info-circle"></i> Price Information</h3>
+    </div>
+    <p class="text-secondary">
+        Prices are set by the platform administrator based on your district/region.
+        Farmers cannot edit prices. The estimated daily value is calculated based on area used and current crop prices.
+        Contact admin for price updates.
+    </p>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-seedling"></i>
+        <h3>No Active Cultivations</h3>
+        <p>Start a new cultivation to see it here</p>
+        <a href="{{ url_for('cultivation.start_cultivation') }}" class="btn btn-primary mt-20">
+            <i class="fas fa-plus"></i> Start Cultivation
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

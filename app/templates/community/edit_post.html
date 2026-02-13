@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Post - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Post</h1>
+    <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('community.edit_post', post_id=post.id) }}">
+        <div class="form-group">
+            <label class="form-label" for="title">Title *</label>
+            <input type="text" id="title" name="title" class="form-control" 
+                   value="{{ post.title }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="category">Category</label>
+            <select id="category" name="category" class="form-control">
+                <option value="discussion" {{ 'selected' if post.category == 'discussion' else '' }}>Discussion</option>
+                <option value="question" {{ 'selected' if post.category == 'question' else '' }}>Question</option>
+                <option value="tip" {{ 'selected' if post.category == 'tip' else '' }}>Farming Tip</option>
+                <option value="success-story" {{ 'selected' if post.category == 'success-story' else '' }}>Success Story</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="content">Content *</label>
+            <textarea id="content" name="content" class="form-control" 
+                      style="min-height: 200px;" required>{{ post.content }}</textarea>
+        </div>
+        
+        <div class="flex-between">
+            <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

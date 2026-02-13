@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Edit News - AgriBalance Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Article</h1>
+    <a href="{{ url_for('admin.news') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('admin.edit_news', article_id=article.id) }}">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="title">Title *</label>
+                <input type="text" id="title" name="title" class="form-control" 
+                       value="{{ article.title }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="category">Category *</label>
+                <select id="category" name="category" class="form-control" required>
+                    {% for category in categories %}
+                    <option value="{{ category }}" {{ 'selected' if article.category == category else '' }}>
+                        {{ category.title() }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="source">Source</label>
+                <input type="text" id="source" name="source" class="form-control" 
+                       value="{{ article.source or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="image_url">Image URL</label>
+                <input type="url" id="image_url" name="image_url" class="form-control" 
+                       value="{{ article.image_url or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_featured" {{ 'checked' if article.is_featured else '' }} style="width: auto; margin-right: 10px;">
+                    Featured Article
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_published" {{ 'checked' if article.is_published else '' }} style="width: auto; margin-right: 10px;">
+                    Published
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="summary">Summary</label>
+            <textarea id="summary" name="summary" class="form-control">{{ article.summary or '' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="content">Content *</label>
+            <textarea id="content" name="content" class="form-control" 
+                      style="min-height: 300px;" required>{{ article.content }}</textarea>
+        </div>
+        
+        <div class="flex-between">
+            <a href="{{ url_for('admin.news') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

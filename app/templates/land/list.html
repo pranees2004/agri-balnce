@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}My Lands - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Lands</h1>
+    <a href="{{ url_for('land.add_land') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add New Land
+    </a>
+</div>
+
+{% if lands %}
+<div class="grid-3">
+    {% for land in lands %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ land.name }}</h3>
+            <span class="badge badge-success">{{ land.land_type or 'General' }}</span>
+        </div>
+        
+        <div class="list-item mb-0">
+            <div class="list-item-info">
+                <p><i class="fas fa-ruler"></i> {{ land.land_size }} {{ land.land_size_unit }}</p>
+            </div>
+        </div>
+        
+        <div class="list-item mb-0">
+            <div class="list-item-info">
+                <p><i class="fas fa-mountain"></i> {{ land.soil_type or 'Soil not specified' }}</p>
+            </div>
+        </div>
+        
+        <div class="list-item mb-0">
+            <div class="list-item-info">
+                <p><i class="fas fa-map-marker-alt"></i> {{ land.district or land.state or land.country }}</p>
+            </div>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('land.view_land', land_id=land.id) }}" class="btn btn-outline">
+                View Details
+            </a>
+            <a href="{{ url_for('cultivation.start_cultivation') }}?land_id={{ land.id }}" class="btn btn-primary">
+                Start Cultivation
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-map-marked-alt"></i>
+        <h3>No lands added yet</h3>
+        <p>Add your first land to start farming with AgriBalance</p>
+        <a href="{{ url_for('land.add_land') }}" class="btn btn-primary btn-large mt-20">
+            <i class="fas fa-plus"></i> Add Your First Land
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

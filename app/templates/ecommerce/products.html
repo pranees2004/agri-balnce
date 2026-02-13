@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Products - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Agricultural Products</h1>
+</div>
+
+<div class="filters mb-20">
+    <a href="{{ url_for('ecommerce.products') }}" class="filter-btn {{ 'active' if not selected_category else '' }}">All</a>
+    {% for category in categories %}
+    <a href="{{ url_for('ecommerce.products', category=category) }}" 
+       class="filter-btn {{ 'active' if selected_category == category else '' }}">
+        {{ category.title() }}
+    </a>
+    {% endfor %}
+</div>
+
+{% if products %}
+<div class="grid-3">
+    {% for product in products %}
+    <div class="product-card">
+        <div class="product-image">
+            {% if product.category == 'seeds' %}
+            <i class="fas fa-seedling"></i>
+            {% elif product.category == 'fertilizers' %}
+            <i class="fas fa-flask"></i>
+            {% elif product.category == 'pesticides' %}
+            <i class="fas fa-spray-can"></i>
+            {% elif product.category == 'machinery' %}
+            <i class="fas fa-tractor"></i>
+            {% else %}
+            <i class="fas fa-tools"></i>
+            {% endif %}
+        </div>
+        <div class="product-info">
+            <p class="product-category">{{ product.category.title() }}</p>
+            <h4>{{ product.name }}</h4>
+            {% if product.brand %}
+            <p class="text-secondary">{{ product.brand }}</p>
+            {% endif %}
+            <p class="product-price">₹{{ product.price }}</p>
+            <p class="text-secondary">{{ product.stock }} in stock</p>
+            <div class="mt-20">
+                <a href="{{ url_for('ecommerce.product_detail', product_id=product.id) }}" class="btn btn-outline btn-block">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>No products available</h3>
+        <p>Check back later for agricultural products</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

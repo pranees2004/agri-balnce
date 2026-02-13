@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category }} - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">{{ category }}</h1>
+    <a href="{{ url_for('ecommerce.products') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> All Products
+    </a>
+</div>
+
+{% if products %}
+<div class="grid-3">
+    {% for product in products %}
+    <div class="product-card">
+        <div class="product-image">
+            {% if product.category == 'seeds' %}
+            <i class="fas fa-seedling"></i>
+            {% elif product.category == 'fertilizers' %}
+            <i class="fas fa-flask"></i>
+            {% elif product.category == 'pesticides' %}
+            <i class="fas fa-spray-can"></i>
+            {% elif product.category == 'machinery' %}
+            <i class="fas fa-tractor"></i>
+            {% else %}
+            <i class="fas fa-tools"></i>
+            {% endif %}
+        </div>
+        <div class="product-info">
+            <h4>{{ product.name }}</h4>
+            {% if product.brand %}
+            <p class="text-secondary">{{ product.brand }}</p>
+            {% endif %}
+            <p class="product-price">₹{{ product.price }}</p>
+            <div class="mt-20">
+                <a href="{{ url_for('ecommerce.product_detail', product_id=product.id) }}" class="btn btn-outline btn-block">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-box-open"></i>
+        <h3>No products in this category</h3>
+        <p>Check back later</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

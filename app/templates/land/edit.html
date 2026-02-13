@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ land.name }} - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Land</h1>
+    <a href="{{ url_for('land.view_land', land_id=land.id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('land.edit_land', land_id=land.id) }}">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="name">Land Name *</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       value="{{ land.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="country">Country *</label>
+                <select id="country" name="country" class="form-control" required>
+                    <option value="India" {{ 'selected' if land.country == 'India' else '' }}>India</option>
+                    <option value="Bangladesh" {{ 'selected' if land.country == 'Bangladesh' else '' }}>Bangladesh</option>
+                    <option value="Pakistan" {{ 'selected' if land.country == 'Pakistan' else '' }}>Pakistan</option>
+                    <option value="Nepal" {{ 'selected' if land.country == 'Nepal' else '' }}>Nepal</option>
+                    <option value="Sri Lanka" {{ 'selected' if land.country == 'Sri Lanka' else '' }}>Sri Lanka</option>
+                    <option value="Other" {{ 'selected' if land.country == 'Other' else '' }}>Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="state">State/Province</label>
+                <input type="text" id="state" name="state" class="form-control" 
+                       value="{{ land.state or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="district">District/Region</label>
+                <input type="text" id="district" name="district" class="form-control" 
+                       value="{{ land.district or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="land_size">Land Size *</label>
+                <input type="number" id="land_size" name="land_size" class="form-control" 
+                       value="{{ land.land_size }}" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="land_size_unit">Size Unit</label>
+                <select id="land_size_unit" name="land_size_unit" class="form-control">
+                    <option value="acres" {{ 'selected' if land.land_size_unit == 'acres' else '' }}>Acres</option>
+                    <option value="hectares" {{ 'selected' if land.land_size_unit == 'hectares' else '' }}>Hectares</option>
+                    <option value="bigha" {{ 'selected' if land.land_size_unit == 'bigha' else '' }}>Bigha</option>
+                    <option value="kanal" {{ 'selected' if land.land_size_unit == 'kanal' else '' }}>Kanal</option>
+                    <option value="gunta" {{ 'selected' if land.land_size_unit == 'gunta' else '' }}>Gunta</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="land_type">Land Type</label>
+                <select id="land_type" name="land_type" class="form-control">
+                    <option value="">Select Type</option>
+                    <option value="irrigated" {{ 'selected' if land.land_type == 'irrigated' else '' }}>Irrigated</option>
+                    <option value="rain-fed" {{ 'selected' if land.land_type == 'rain-fed' else '' }}>Rain-fed</option>
+                    <option value="mixed" {{ 'selected' if land.land_type == 'mixed' else '' }}>Mixed</option>
+                    <option value="orchard" {{ 'selected' if land.land_type == 'orchard' else '' }}>Orchard</option>
+                    <option value="plantation" {{ 'selected' if land.land_type == 'plantation' else '' }}>Plantation</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="soil_type">Soil Type</label>
+                <select id="soil_type" name="soil_type" class="form-control">
+                    <option value="">Select Soil Type</option>
+                    <option value="clay" {{ 'selected' if land.soil_type == 'clay' else '' }}>Clay</option>
+                    <option value="loam" {{ 'selected' if land.soil_type == 'loam' else '' }}>Loam</option>
+                    <option value="sandy" {{ 'selected' if land.soil_type == 'sandy' else '' }}>Sandy</option>
+                    <option value="black" {{ 'selected' if land.soil_type == 'black' else '' }}>Black (Regur)</option>
+                    <option value="red" {{ 'selected' if land.soil_type == 'red' else '' }}>Red Soil</option>
+                    <option value="alluvial" {{ 'selected' if land.soil_type == 'alluvial' else '' }}>Alluvial</option>
+                    <option value="laterite" {{ 'selected' if land.soil_type == 'laterite' else '' }}>Laterite</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="climate_type">Climate Type</label>
+                <select id="climate_type" name="climate_type" class="form-control">
+                    <option value="">Select Climate</option>
+                    <option value="tropical" {{ 'selected' if land.climate_type == 'tropical' else '' }}>Tropical</option>
+                    <option value="subtropical" {{ 'selected' if land.climate_type == 'subtropical' else '' }}>Sub-tropical</option>
+                    <option value="temperate" {{ 'selected' if land.climate_type == 'temperate' else '' }}>Temperate</option>
+                    <option value="arid" {{ 'selected' if land.climate_type == 'arid' else '' }}>Arid/Semi-arid</option>
+                    <option value="humid" {{ 'selected' if land.climate_type == 'humid' else '' }}>Humid</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="water_source">Water Source</label>
+                <select id="water_source" name="water_source" class="form-control">
+                    <option value="">Select Water Source</option>
+                    <option value="well" {{ 'selected' if land.water_source == 'well' else '' }}>Well/Borewell</option>
+                    <option value="canal" {{ 'selected' if land.water_source == 'canal' else '' }}>Canal</option>
+                    <option value="river" {{ 'selected' if land.water_source == 'river' else '' }}>River</option>
+                    <option value="tank" {{ 'selected' if land.water_source == 'tank' else '' }}>Tank/Pond</option>
+                    <option value="rain" {{ 'selected' if land.water_source == 'rain' else '' }}>Rain-fed Only</option>
+                    <option value="drip" {{ 'selected' if land.water_source == 'drip' else '' }}>Drip Irrigation</option>
+                    <option value="sprinkler" {{ 'selected' if land.water_source == 'sprinkler' else '' }}>Sprinkler</option>
+                    <option value="multiple" {{ 'selected' if land.water_source == 'multiple' else '' }}>Multiple Sources</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="previous_crop">Previous Crop</label>
+                <input type="text" id="previous_crop" name="previous_crop" class="form-control" 
+                       value="{{ land.previous_crop or '' }}">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="notes">Additional Notes</label>
+            <textarea id="notes" name="notes" class="form-control">{{ land.notes or '' }}</textarea>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('land.view_land', land_id=land.id) }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

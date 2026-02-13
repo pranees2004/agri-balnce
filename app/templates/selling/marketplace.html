@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Crop Marketplace - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Crop Marketplace</h1>
+    <a href="{{ url_for('selling.add_listing') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Sell Your Crop
+    </a>
+</div>
+
+<div class="filters mb-20">
+    <a href="{{ url_for('selling.marketplace') }}" class="filter-btn active">All Crops</a>
+    <a href="{{ url_for('selling.my_listings') }}" class="filter-btn">My Listings</a>
+</div>
+
+{% if listings %}
+<div class="grid-3">
+    {% for listing in listings %}
+    <div class="product-card">
+        <div class="product-image">
+            <i class="fas fa-wheat-awn"></i>
+        </div>
+        <div class="product-info">
+            <h4>{{ listing.crop_name }}</h4>
+            {% if listing.variety %}
+            <p class="product-category">{{ listing.variety }}</p>
+            {% endif %}
+            <p class="product-price">₹{{ listing.price_per_unit }}/{{ listing.quantity_unit }}</p>
+            <p><strong>{{ listing.quantity }} {{ listing.quantity_unit }}</strong> available</p>
+            <p class="text-secondary"><i class="fas fa-map-marker-alt"></i> {{ listing.location or 'Location not specified' }}</p>
+            {% if listing.is_organic %}
+            <span class="badge badge-success">Organic</span>
+            {% endif %}
+            <div class="mt-20">
+                <a href="{{ url_for('selling.view_listing', listing_id=listing.id) }}" class="btn btn-outline btn-block">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-store"></i>
+        <h3>No crops listed yet</h3>
+        <p>Be the first to list your crops for sale!</p>
+        <a href="{{ url_for('selling.add_listing') }}" class="btn btn-primary btn-large mt-20">
+            <i class="fas fa-plus"></i> List Your Crop
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

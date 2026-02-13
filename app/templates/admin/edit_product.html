@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Product - AgriBalance Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Product</h1>
+    <a href="{{ url_for('admin.products') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST" action="{{ url_for('admin.edit_product', product_id=product.id) }}">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="name">Product Name *</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ product.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="category">Category *</label>
+                <select id="category" name="category" class="form-control" required>
+                    {% for category in categories %}
+                    <option value="{{ category }}" {{ 'selected' if product.category == category else '' }}>
+                        {{ category.title() }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="price">Price (₹) *</label>
+                <input type="number" id="price" name="price" class="form-control" value="{{ product.price }}" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="stock">Stock Quantity *</label>
+                <input type="number" id="stock" name="stock" class="form-control" value="{{ product.stock }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="unit">Unit</label>
+                <input type="text" id="unit" name="unit" class="form-control" value="{{ product.unit or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="brand">Brand</label>
+                <input type="text" id="brand" name="brand" class="form-control" value="{{ product.brand or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_active" {{ 'checked' if product.is_active else '' }} style="width: auto; margin-right: 10px;">
+                    Active (visible to users)
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" name="description" class="form-control">{{ product.description or '' }}</textarea>
+        </div>
+        
+        <div class="flex-between">
+            <a href="{{ url_for('admin.products') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-large">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

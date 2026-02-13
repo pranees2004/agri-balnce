@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Community - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Farmer Community</h1>
+    <a href="{{ url_for('community.create_post') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Create Post
+    </a>
+</div>
+
+<div class="filters mb-20">
+    <a href="{{ url_for('community.feed') }}" class="filter-btn {{ 'active' if not selected_category else '' }}">All</a>
+    {% for category in categories %}
+    <a href="{{ url_for('community.feed', category=category) }}" 
+       class="filter-btn {{ 'active' if selected_category == category else '' }}">
+        {{ category.replace('-', ' ').title() }}
+    </a>
+    {% endfor %}
+    <a href="{{ url_for('community.my_posts') }}" class="filter-btn">My Posts</a>
+</div>
+
+{% if posts %}
+{% for post in posts %}
+<div class="post-card">
+    {% if post.is_pinned %}
+    <span class="badge badge-warning mb-10"><i class="fas fa-thumbtack"></i> Pinned</span>
+    {% endif %}
+    
+    <div class="post-header">
+        <div class="post-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="post-meta">
+            <h4>{{ post.author.name }}</h4>
+            <span>{{ post.created_at.strftime('%d %b %Y') }} • {{ post.category.replace('-', ' ').title() if post.category else 'General' }}</span>
+        </div>
+    </div>
+    
+    <div class="post-content">
+        <h3><a href="{{ url_for('community.view_post', post_id=post.id) }}">{{ post.title }}</a></h3>
+        <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+    </div>
+    
+    <div class="post-actions">
+        <span class="post-action">
+            <i class="fas fa-heart"></i> {{ post.likes }}
+        </span>
+        <span class="post-action">
+            <i class="fas fa-comment"></i> {{ post.comments.count() }}
+        </span>
+        <span class="post-action">
+            <i class="fas fa-eye"></i> {{ post.views }}
+        </span>
+        <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="post-action">
+            Read More <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <h3>No posts yet</h3>
+        <p>Be the first to start a discussion!</p>
+        <a href="{{ url_for('community.create_post') }}" class="btn btn-primary btn-large mt-20">
+            <i class="fas fa-plus"></i> Create Post
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Admin Dashboard</h1>
+</div>
+
+<!-- Stats Overview - Clickable Cards -->
+<div class="admin-stats">
+    <a href="{{ url_for('admin.users') }}" class="admin-stat-card clickable">
+        <h3>{{ stats.total_users }}</h3>
+        <p>Total Users</p>
+        <i class="fas fa-users stat-icon-bg"></i>
+    </a>
+    <a href="{{ url_for('admin.lands') }}" class="admin-stat-card clickable">
+        <h3>{{ stats.total_lands }}</h3>
+        <p>Total Lands</p>
+        <i class="fas fa-map stat-icon-bg"></i>
+    </a>
+    <a href="{{ url_for('admin.cultivations') }}" class="admin-stat-card clickable">
+        <h3>{{ stats.active_cultivations }}</h3>
+        <p>Active Cultivations</p>
+        <i class="fas fa-seedling stat-icon-bg"></i>
+    </a>
+    <a href="{{ url_for('admin.products') }}" class="admin-stat-card clickable">
+        <h3>{{ stats.products }}</h3>
+        <p>Products</p>
+        <i class="fas fa-shopping-cart stat-icon-bg"></i>
+    </a>
+    <a href="{{ url_for('admin.community_posts') }}" class="admin-stat-card clickable">
+        <h3>{{ stats.community_posts }}</h3>
+        <p>Community Posts</p>
+        <i class="fas fa-comments stat-icon-bg"></i>
+    </a>
+</div>
+
+<!-- Quick Actions -->
+<div class="grid-3 mb-20">
+    <a href="{{ url_for('admin.users') }}" class="action-card">
+        <i class="fas fa-users"></i>
+        <h3>Manage Users</h3>
+        <p>View, suspend users</p>
+    </a>
+    <a href="{{ url_for('admin.prices') }}" class="action-card">
+        <i class="fas fa-tag"></i>
+        <h3>Crop Prices</h3>
+        <p>Set area-wise prices</p>
+    </a>
+    <a href="{{ url_for('admin.limits') }}" class="action-card">
+        <i class="fas fa-ruler"></i>
+        <h3>Region Limits</h3>
+        <p>Set cultivation limits</p>
+    </a>
+    <a href="{{ url_for('admin.products') }}" class="action-card">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Manage Products</h3>
+        <p>Add, edit products</p>
+    </a>
+    <a href="{{ url_for('admin.community_posts') }}" class="action-card">
+        <i class="fas fa-comments"></i>
+        <h3>Moderate Posts</h3>
+        <p>Review, remove posts</p>
+    </a>
+    <a href="{{ url_for('admin.listings') }}" class="action-card">
+        <i class="fas fa-store"></i>
+        <h3>Crop Listings</h3>
+        <p>View all listings</p>
+    </a>
+</div>
+
+<div class="grid-2">
+    <!-- Recent Users -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Users</h3>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-outline">View All</a>
+        </div>
+        
+        {% for user in recent_users %}
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>{{ user.name }}</h4>
+                <p>{{ user.mobile or user.email or 'No contact' }}</p>
+            </div>
+            <span class="badge badge-{{ 'error' if user.is_suspended else 'success' }}">
+                {{ 'Suspended' if user.is_suspended else 'Active' }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Recent Listings -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Listings</h3>
+            <a href="{{ url_for('admin.listings') }}" class="btn btn-outline">View All</a>
+        </div>
+        
+        {% for listing in recent_listings %}
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>{{ listing.crop_name }}</h4>
+                <p>{{ listing.seller.name }} - ₹{{ listing.price_per_unit }}/{{ listing.quantity_unit }}</p>
+            </div>
+            <span class="badge badge-{{ 'success' if listing.status == 'available' else 'info' }}">
+                {{ listing.status.title() }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

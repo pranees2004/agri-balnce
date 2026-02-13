@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Region Limit - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Edit Region Limit</h1>
+    <a href="{{ url_for('admin.limits') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="district">District *</label>
+                <select id="district" name="district" class="form-control" required>
+                    {% for district in districts %}
+                    <option value="{{ district }}" {{ 'selected' if district == limit.district else '' }}>{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <select id="crop_name" name="crop_name" class="form-control" required>
+                    {% for crop in crops %}
+                    <option value="{{ crop }}" {{ 'selected' if crop == limit.crop_name else '' }}>{{ crop }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="max_area">Maximum Area (acres) *</label>
+                <input type="number" id="max_area" name="max_area" class="form-control" 
+                       step="0.01" min="0" value="{{ limit.max_area }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="max_cultivation_count">Max Farmers</label>
+                <input type="number" id="max_cultivation_count" name="max_cultivation_count" class="form-control" 
+                       min="0" value="{{ limit.max_cultivation_count }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" name="is_active" {{ 'checked' if limit.is_active else '' }}> Active
+                </label>
+            </div>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.limits') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Limit
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AgriBalance{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="{% if current_user.is_authenticated %}theme-{{ current_user.theme }}{% else %}theme-light{% endif %}">
+    {% if current_user.is_authenticated %}
+    <!-- Mobile Navigation Toggle -->
+    <button class="nav-toggle" id="navToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-seedling"></i>
+                <span>AgriBalance</span>
+            </div>
+            <button class="close-nav" id="closeNav">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-details">
+                <span class="user-name">{{ current_user.name }}</span>
+                <span class="user-location">{{ current_user.location or 'Location not set' }}</span>
+            </div>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('land.list_lands') }}" class="nav-link {% if 'land' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-map"></i>
+                    <span>My Lands</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('cultivation.active_cultivations') }}" class="nav-link {% if 'cultivation.active' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-seedling"></i>
+                    <span>Active Cultivation</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('selling.marketplace') }}" class="nav-link {% if 'selling' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-store"></i>
+                    <span>Sell Crops</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('ecommerce.products') }}" class="nav-link {% if 'ecommerce' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Products</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('community.feed') }}" class="nav-link {% if 'community' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Community</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('dashboard.profile') }}" class="nav-link {% if request.endpoint == 'dashboard.profile' %}active{% endif %}">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('settings.index') }}" class="nav-link {% if 'settings' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('auth.logout') }}" class="nav-link logout-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="{% if current_user.is_authenticated %}main-content{% else %}full-width{% endif %}">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                            <button class="alert-close" onclick="this.parentElement.remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

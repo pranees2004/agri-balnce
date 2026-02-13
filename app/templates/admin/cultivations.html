@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}All Cultivations - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">All Cultivations</h1>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Crop Name</th>
+                    <th>Farmer</th>
+                    <th>Land</th>
+                    <th>Area</th>
+                    <th>Harvest Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cultivation in cultivations %}
+                <tr>
+                    <td>{{ cultivation.crop_name }}</td>
+                    <td>{{ cultivation.farmer.name }}</td>
+                    <td>{{ cultivation.land.name }}</td>
+                    <td>{{ cultivation.area_used or cultivation.land.land_size }} acres</td>
+                    <td>{{ cultivation.expected_harvest_date.strftime('%d %b %Y') if cultivation.expected_harvest_date else '-' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if cultivation.status == 'active' else 'warning' if cultivation.status == 'planned' else 'info' }}">
+                            {{ cultivation.status.title() }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No cultivations yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

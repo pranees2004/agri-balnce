@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Profile</h1>
+</div>
+
+<div class="card">
+    <div class="text-center mb-20">
+        <div class="user-avatar" style="width: 80px; height: 80px; font-size: 2.5rem; margin: 0 auto 15px;">
+            <i class="fas fa-user"></i>
+        </div>
+        <h2>{{ current_user.name }}</h2>
+        <p class="text-secondary">Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+    </div>
+    
+    <div class="grid-2">
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>Mobile Number</h4>
+                <p>{{ current_user.mobile or 'Not set' }}</p>
+            </div>
+        </div>
+        
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>Email Address</h4>
+                <p>{{ current_user.email or 'Not set' }}</p>
+            </div>
+        </div>
+        
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>Location</h4>
+                <p>{{ current_user.location or 'Not set' }}</p>
+            </div>
+        </div>
+        
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>Language</h4>
+                <p>{{ current_user.language.upper() }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="stats-grid compact">
+    <div class="stat-card compact">
+        <div class="stat-icon lands">
+            <i class="fas fa-map"></i>
+        </div>
+        <div class="stat-info">
+            <h4>{{ current_user.lands.count() }}</h4>
+            <p>Total Lands</p>
+        </div>
+    </div>
+    
+    <div class="stat-card compact">
+        <div class="stat-icon cultivations">
+            <i class="fas fa-seedling"></i>
+        </div>
+        <div class="stat-info">
+            <h4>{{ current_user.cultivations.count() }}</h4>
+            <p>Cultivations</p>
+        </div>
+    </div>
+    
+    <div class="stat-card compact">
+        <div class="stat-icon listings">
+            <i class="fas fa-comments"></i>
+        </div>
+        <div class="stat-info">
+            <h4>{{ user_posts|length }}</h4>
+            <p>Posts</p>
+        </div>
+    </div>
+</div>
+
+<!-- User Posts -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-comments"></i> My Posts</h3>
+        <a href="{{ url_for('community.create_post') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> New Post
+        </a>
+    </div>
+    
+    {% if user_posts %}
+        {% for post in user_posts[:5] %}
+        <div class="list-item">
+            <div class="list-item-info">
+                <h4>{{ post.title }}</h4>
+                <p>{{ post.created_at.strftime('%d %b %Y') }} • {{ post.likes }} likes • {{ post.views }} views</p>
+            </div>
+            <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="btn btn-outline btn-icon">
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-secondary text-center" style="padding: 20px;">No posts yet. Share your farming experience!</p>
+    {% endif %}
+</div>
+
+<!-- Platform Rules -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-gavel"></i> Platform Rules & Legal Compliance</h3>
+    </div>
+    
+    <div class="rules-section">
+        <h4>Platform Usage Rules</h4>
+        <ul>
+            <li>All crop sales must occur only through this platform</li>
+            <li>Farmers can sell only their own cultivated crops</li>
+            <li>Crop prices are set by admin based on regional rates</li>
+            <li>Quantity changes after harvest are allowed only within minimal tolerance</li>
+            <li>Manual price entry by farmers is disabled</li>
+            <li>AI suggestions are based on admin-defined data and cannot override admin rules</li>
+        </ul>
+        
+        <h4>Legal Compliance</h4>
+        <p class="text-secondary">This platform operates as a private digital facilitation system aligned with:</p>
+        <ul class="legal-list">
+            <li>Tamil Nadu Agricultural Produce Marketing (Regulation) Act, 1987</li>
+            <li>Farmers' Produce Trade and Commerce Act, 2020</li>
+            <li>Indian Contract Act, 1872</li>
+            <li>Information Technology Act, 2000</li>
+            <li>Consumer Protection Act, 2019</li>
+            <li>Legal Metrology Act, 2009</li>
+            <li>Digital Personal Data Protection Act, 2023</li>
+            <li>IT Intermediary Rules, 2021</li>
+        </ul>
+        
+        <h4>Disclaimer</h4>
+        <p class="text-secondary">
+            This platform does not claim APMC status, MSP authority, or government ownership.
+            Violations of platform rules may result in warnings, restrictions, delisting, or suspension.
+        </p>
+    </div>
+</div>
+{% endblock %}

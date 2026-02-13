@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}News & Schemes - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">News & Government Schemes</h1>
+</div>
+
+<div class="filters mb-20">
+    <a href="{{ url_for('news.news_list') }}" class="filter-btn {{ 'active' if not selected_category else '' }}">All</a>
+    {% for category in categories %}
+    <a href="{{ url_for('news.news_list', category=category) }}" 
+       class="filter-btn {{ 'active' if selected_category == category else '' }}">
+        {{ category.title() }}
+    </a>
+    {% endfor %}
+</div>
+
+{% if articles %}
+<div class="grid-3">
+    {% for article in articles %}
+    <div class="news-card">
+        <div class="news-image">
+            {% if article.category == 'scheme' %}
+            <i class="fas fa-landmark"></i>
+            {% elif article.category == 'announcement' %}
+            <i class="fas fa-bullhorn"></i>
+            {% elif article.category == 'tip' %}
+            <i class="fas fa-lightbulb"></i>
+            {% else %}
+            <i class="fas fa-newspaper"></i>
+            {% endif %}
+        </div>
+        <div class="news-content">
+            <span class="news-category">{{ article.category or 'News' }}</span>
+            {% if article.is_featured %}
+            <span class="badge badge-warning"><i class="fas fa-star"></i> Featured</span>
+            {% endif %}
+            <h4 class="news-title">{{ article.title }}</h4>
+            {% if article.summary %}
+            <p class="text-secondary">{{ article.summary[:100] }}...</p>
+            {% endif %}
+            <p class="news-date">{{ article.published_at.strftime('%d %B %Y') }}</p>
+            <a href="{{ url_for('news.view_article', article_id=article.id) }}" class="btn btn-outline btn-block mt-10">
+                Read More
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-newspaper"></i>
+        <h3>No news articles</h3>
+        <p>Check back later for updates</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

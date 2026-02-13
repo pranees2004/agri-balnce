@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Region Limits - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Region Limits</h1>
+    <a href="{{ url_for('admin.add_limit') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Limit
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>District</th>
+                    <th>Crop Name</th>
+                    <th>Max Area</th>
+                    <th>Max Cultivations</th>
+                    <th>Current Usage</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for limit in limits %}
+                <tr>
+                    <td>{{ limit.district }}</td>
+                    <td>{{ limit.crop_name }}</td>
+                    <td>{{ limit.max_area }} acres</td>
+                    <td>{{ limit.max_cultivation_count }}</td>
+                    <td>{{ limit.current_area_used }} acres / {{ limit.current_cultivation_count }} farmers</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if limit.is_active else 'error' }}">
+                            {{ 'Active' if limit.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_limit', limit_id=limit.id) }}" class="btn btn-outline btn-icon">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('admin.delete_limit', limit_id=limit.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-icon" onclick="return confirm('Delete this limit?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No region limits set. <a href="{{ url_for('admin.add_limit') }}">Add one</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
