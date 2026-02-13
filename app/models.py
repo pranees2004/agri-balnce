@@ -73,12 +73,16 @@ class Land(db.Model):
     country = db.Column(db.String(100), nullable=False)
     state = db.Column(db.String(100))
     district = db.Column(db.String(100))
+    taluk = db.Column(db.String(100))  # Taluk/Tehsil for granular location
+    village = db.Column(db.String(100))  # Village name
+    latitude = db.Column(db.Float)  # GPS latitude
+    longitude = db.Column(db.Float)  # GPS longitude
     land_size = db.Column(db.Float, nullable=False)  # in acres
     land_size_unit = db.Column(db.String(20), default='acres')
-    land_type = db.Column(db.String(50))  # irrigated, rain-fed, etc.
-    soil_type = db.Column(db.String(50))  # clay, loam, sandy, etc.
-    climate_type = db.Column(db.String(50))  # tropical, subtropical, etc.
-    water_source = db.Column(db.String(100))  # well, canal, river, rain, etc.
+    land_type = db.Column(db.String(50))  # Wetland, Dryland
+    soil_type = db.Column(db.String(50))  # Red, Black, Alluvial, Sandy, Clay
+    climate_type = db.Column(db.String(50))  # Tropical, Semi-Arid, Humid
+    water_source = db.Column(db.String(100))  # Rain-fed, Borewell, Canal, Tank
     previous_crop = db.Column(db.String(100))
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -96,8 +100,10 @@ class Cultivation(db.Model):
     __tablename__ = 'cultivations'
     
     id = db.Column(db.Integer, primary_key=True)
+    cultivation_approval_id = db.Column(db.String(50), unique=True, nullable=True)  # Unique approval ID
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     land_id = db.Column(db.Integer, db.ForeignKey('lands.id'), nullable=False)
+    quota_id = db.Column(db.Integer, db.ForeignKey('admin_quotas.id'), nullable=True)  # Link to quota
     crop_name = db.Column(db.String(100), nullable=False)
     variety = db.Column(db.String(100))
     area_used = db.Column(db.Float, default=0)  # Area used for this cultivation in acres
@@ -108,10 +114,14 @@ class Cultivation(db.Model):
     estimated_yield = db.Column(db.Float)
     actual_yield = db.Column(db.Float)
     yield_unit = db.Column(db.String(20), default='kg')
+    max_allowed_sale_quantity = db.Column(db.Float)  # Maximum quantity allowed for sale
     ai_recommendations = db.Column(db.Text)  # JSON string of AI suggestions
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    harvest_sales = db.relationship('HarvestSale', backref='cultivation', lazy='dynamic')
     
     def __repr__(self):
         return f'<Cultivation {self.crop_name}>'
@@ -249,7 +259,7 @@ class CropPrice(db.Model):
 
 
 class RegionLimit(db.Model):
-    """Admin-managed region-wise area limits and crop cultivation caps."""
+    """Admin-managed region-wise area limits and crop cultivation caps (DEPRECATED - use AdminQuota)."""
     __tablename__ = 'region_limits'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -265,3 +275,188 @@ class RegionLimit(db.Model):
     
     def __repr__(self):
         return f'<RegionLimit {self.crop_name} - {self.district}>'
+
+
+class CropMaster(db.Model):
+    """Master table for standard crop information."""
+    __tablename__ = 'crop_master'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    crop_name = db.Column(db.String(100), unique=True, nullable=False)
+    crop_type = db.Column(db.String(50))  # Grain, Vegetable, Fruit, Pulse, Oilseed, etc.
+    scientific_name = db.Column(db.String(200))
+    avg_yield_per_acre = db.Column(db.Float)  # Average yield per acre
+    yield_unit = db.Column(db.String(20), default='kg')
+    growth_duration_days = db.Column(db.Integer)  # Typical growth period
+    water_requirement = db.Column(db.String(50))  # Low, Medium, High
+    suitable_soil_types = db.Column(db.Text)  # JSON array of suitable soils
+    suitable_climate_types = db.Column(db.Text)  # JSON array of suitable climates
+    season = db.Column(db.String(50))  # Kharif, Rabi, Zaid, Year-round
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<CropMaster {self.crop_name}>'
+
+
+class AdminQuota(db.Model):
+    """Admin-controlled crop cultivation quotas based on location and season."""
+    __tablename__ = 'admin_quotas'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    # Geographic scope
+    country = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(100))
+    district = db.Column(db.String(100))
+    taluk = db.Column(db.String(100))
+    village = db.Column(db.String(100))
+    # GPS polygon for advanced location (stored as JSON)
+    gps_polygon = db.Column(db.Text)
+    
+    # Crop details
+    crop_name = db.Column(db.String(100), nullable=False)
+    
+    # Harvest season
+    harvest_season_start = db.Column(db.Date)
+    harvest_season_end = db.Column(db.Date)
+    
+    # Quota limits
+    total_allowed_area = db.Column(db.Float, nullable=False)  # in acres/hectares
+    area_unit = db.Column(db.String(20), default='acres')
+    max_per_farmer = db.Column(db.Float)  # Optional: max area per farmer
+    
+    # Current allocation tracking
+    allocated_area = db.Column(db.Float, default=0)  # Currently allocated
+    allocated_farmer_count = db.Column(db.Integer, default=0)
+    
+    # Market demand integration
+    predicted_demand_volume = db.Column(db.Float)
+    expected_harvest_volume = db.Column(db.Float)
+    
+    # Price guidance
+    min_price_per_unit = db.Column(db.Float)
+    max_price_per_unit = db.Column(db.Float)
+    price_unit = db.Column(db.String(20), default='kg')
+    
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    cultivations = db.relationship('Cultivation', backref='quota', lazy='dynamic')
+    
+    def remaining_area(self):
+        """Calculate remaining available area."""
+        return self.total_allowed_area - self.allocated_area
+    
+    def is_quota_available(self, requested_area, farmer_id=None):
+        """Check if quota is available for requested area."""
+        if not self.is_active:
+            return False, "Quota is not active"
+        
+        if self.remaining_area() < requested_area:
+            return False, f"Only {self.remaining_area():.2f} {self.area_unit} available"
+        
+        if self.max_per_farmer and requested_area > self.max_per_farmer:
+            return False, f"Maximum {self.max_per_farmer} {self.area_unit} per farmer"
+        
+        return True, "Quota available"
+    
+    def __repr__(self):
+        return f'<AdminQuota {self.crop_name} - {self.district}>'
+
+
+class HarvestSale(db.Model):
+    """Harvest sales submissions for admin approval."""
+    __tablename__ = 'harvest_sales'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    cultivation_id = db.Column(db.Integer, db.ForeignKey('cultivations.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Harvest details
+    actual_yield_quantity = db.Column(db.Float, nullable=False)
+    yield_unit = db.Column(db.String(20), default='kg')
+    
+    # Selling details
+    selling_quantity = db.Column(db.Float, nullable=False)
+    approved_quantity = db.Column(db.Float)  # Admin can adjust
+    selling_price_expectation = db.Column(db.Float)
+    contact_number = db.Column(db.String(20))
+    
+    # Photos
+    photos = db.Column(db.Text)  # JSON array of photo URLs
+    
+    # Admin approval
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    admin_notes = db.Column(db.Text)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    reviewed_at = db.Column(db.DateTime)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    farmer = db.relationship('User', foreign_keys=[user_id], backref='harvest_submissions')
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+    
+    def __repr__(self):
+        return f'<HarvestSale {self.id} - {self.status}>'
+
+
+class MarketDemandData(db.Model):
+    """Market demand predictions and trends."""
+    __tablename__ = 'market_demand_data'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    crop_name = db.Column(db.String(100), nullable=False)
+    district = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    
+    # Demand predictions
+    predicted_demand = db.Column(db.Float)  # in tonnes
+    predicted_supply = db.Column(db.Float)  # in tonnes
+    demand_supply_ratio = db.Column(db.Float)
+    
+    # Price trends
+    current_price = db.Column(db.Float)
+    predicted_price = db.Column(db.Float)
+    price_unit = db.Column(db.String(20), default='kg')
+    
+    # Time period
+    forecast_date = db.Column(db.Date)
+    season = db.Column(db.String(50))
+    
+    # Confidence
+    confidence_score = db.Column(db.Float)  # 0-1 scale
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<MarketDemand {self.crop_name} - {self.district}>'
+
+
+class Notification(db.Model):
+    """Notifications for admin-farmer communications."""
+    __tablename__ = 'notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Notification details
+    notification_type = db.Column(db.String(50), nullable=False)  # harvest_submitted, quota_alert, approval, rejection
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    
+    # Related entities
+    related_cultivation_id = db.Column(db.Integer, db.ForeignKey('cultivations.id'))
+    related_harvest_sale_id = db.Column(db.Integer, db.ForeignKey('harvest_sales.id'))
+    
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship
+    user = db.relationship('User', backref='notifications')
+    
+    def __repr__(self):
+        return f'<Notification {self.title}>'

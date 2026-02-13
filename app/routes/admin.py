@@ -1,9 +1,12 @@
 """Admin panel routes for AgriBalance."""
 from functools import wraps
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Land, Cultivation, CropListing, Product, CommunityPost, NewsArticle, CropPrice, RegionLimit
+from app.models import (User, Land, Cultivation, CropListing, Product, CommunityPost, 
+                        NewsArticle, CropPrice, RegionLimit, CropMaster, AdminQuota, 
+                        HarvestSale, MarketDemandData, Notification)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -552,3 +555,256 @@ def lands():
     """List all lands."""
     lands = Land.query.order_by(Land.created_at.desc()).all()
     return render_template('admin/lands.html', lands=lands)
+
+
+# Admin Quota Management (New System)
+@admin_bp.route('/quotas')
+@login_required
+@admin_required
+def quotas():
+    """List all admin quotas."""
+    quotas = AdminQuota.query.order_by(AdminQuota.created_at.desc()).all()
+    return render_template('admin/quotas.html', quotas=quotas)
+
+
+@admin_bp.route('/quotas/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_quota():
+    """Add new admin quota."""
+    if request.method == 'POST':
+        quota = AdminQuota(
+            country=request.form.get('country'),
+            state=request.form.get('state'),
+            district=request.form.get('district'),
+            taluk=request.form.get('taluk'),
+            village=request.form.get('village'),
+            crop_name=request.form.get('crop_name'),
+            harvest_season_start=datetime.strptime(request.form.get('harvest_season_start'), '%Y-%m-%d').date() if request.form.get('harvest_season_start') else None,
+            harvest_season_end=datetime.strptime(request.form.get('harvest_season_end'), '%Y-%m-%d').date() if request.form.get('harvest_season_end') else None,
+            total_allowed_area=float(request.form.get('total_allowed_area', 0)),
+            area_unit=request.form.get('area_unit', 'acres'),
+            max_per_farmer=float(request.form.get('max_per_farmer')) if request.form.get('max_per_farmer') else None,
+            predicted_demand_volume=float(request.form.get('predicted_demand_volume')) if request.form.get('predicted_demand_volume') else None,
+            min_price_per_unit=float(request.form.get('min_price_per_unit')) if request.form.get('min_price_per_unit') else None,
+            max_price_per_unit=float(request.form.get('max_price_per_unit')) if request.form.get('max_price_per_unit') else None,
+            price_unit=request.form.get('price_unit', 'kg'),
+            is_active=request.form.get('is_active') == 'on'
+        )
+        db.session.add(quota)
+        db.session.commit()
+        
+        flash('Admin quota added successfully!', 'success')
+        return redirect(url_for('admin.quotas'))
+    
+    return render_template(
+        'admin/add_quota.html',
+        districts=TAMIL_NADU_DISTRICTS,
+        crops=COMMON_CROPS
+    )
+
+
+@admin_bp.route('/quotas/<int:quota_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_quota(quota_id):
+    """Edit admin quota."""
+    quota = AdminQuota.query.get_or_404(quota_id)
+    
+    if request.method == 'POST':
+        quota.country = request.form.get('country', quota.country)
+        quota.state = request.form.get('state', quota.state)
+        quota.district = request.form.get('district', quota.district)
+        quota.taluk = request.form.get('taluk', quota.taluk)
+        quota.village = request.form.get('village', quota.village)
+        quota.crop_name = request.form.get('crop_name', quota.crop_name)
+        quota.harvest_season_start = datetime.strptime(request.form.get('harvest_season_start'), '%Y-%m-%d').date() if request.form.get('harvest_season_start') else quota.harvest_season_start
+        quota.harvest_season_end = datetime.strptime(request.form.get('harvest_season_end'), '%Y-%m-%d').date() if request.form.get('harvest_season_end') else quota.harvest_season_end
+        quota.total_allowed_area = float(request.form.get('total_allowed_area', quota.total_allowed_area))
+        quota.area_unit = request.form.get('area_unit', quota.area_unit)
+        quota.max_per_farmer = float(request.form.get('max_per_farmer')) if request.form.get('max_per_farmer') else None
+        quota.predicted_demand_volume = float(request.form.get('predicted_demand_volume')) if request.form.get('predicted_demand_volume') else quota.predicted_demand_volume
+        quota.min_price_per_unit = float(request.form.get('min_price_per_unit')) if request.form.get('min_price_per_unit') else quota.min_price_per_unit
+        quota.max_price_per_unit = float(request.form.get('max_price_per_unit')) if request.form.get('max_price_per_unit') else quota.max_price_per_unit
+        quota.price_unit = request.form.get('price_unit', quota.price_unit)
+        quota.is_active = request.form.get('is_active') == 'on'
+        
+        db.session.commit()
+        flash('Admin quota updated!', 'success')
+        return redirect(url_for('admin.quotas'))
+    
+    return render_template(
+        'admin/edit_quota.html',
+        quota=quota,
+        districts=TAMIL_NADU_DISTRICTS,
+        crops=COMMON_CROPS
+    )
+
+
+@admin_bp.route('/quotas/<int:quota_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_quota(quota_id):
+    """Delete admin quota."""
+    quota = AdminQuota.query.get_or_404(quota_id)
+    
+    # Check if there are active cultivations using this quota
+    active_cultivations = Cultivation.query.filter_by(quota_id=quota_id).filter(
+        Cultivation.status.in_(['planned', 'active'])
+    ).count()
+    
+    if active_cultivations > 0:
+        flash(f'Cannot delete quota. {active_cultivations} active cultivations are using it.', 'error')
+        return redirect(url_for('admin.quotas'))
+    
+    db.session.delete(quota)
+    db.session.commit()
+    flash('Admin quota deleted!', 'success')
+    return redirect(url_for('admin.quotas'))
+
+
+# Harvest Sales Management
+@admin_bp.route('/harvest-sales')
+@login_required
+@admin_required
+def harvest_sales():
+    """List all harvest sales submissions."""
+    sales = HarvestSale.query.order_by(HarvestSale.created_at.desc()).all()
+    return render_template('admin/harvest_sales.html', sales=sales)
+
+
+@admin_bp.route('/harvest-sales/<int:sale_id>')
+@login_required
+@admin_required
+def view_harvest_sale(sale_id):
+    """View harvest sale details."""
+    sale = HarvestSale.query.get_or_404(sale_id)
+    return render_template('admin/view_harvest_sale.html', sale=sale)
+
+
+@admin_bp.route('/harvest-sales/<int:sale_id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def approve_harvest_sale(sale_id):
+    """Approve harvest sale submission."""
+    sale = HarvestSale.query.get_or_404(sale_id)
+    
+    approved_qty = request.form.get('approved_quantity')
+    admin_notes = request.form.get('admin_notes')
+    
+    if approved_qty:
+        sale.approved_quantity = float(approved_qty)
+    else:
+        sale.approved_quantity = sale.selling_quantity
+    
+    sale.status = 'approved'
+    sale.admin_notes = admin_notes
+    sale.reviewed_by = current_user.id
+    sale.reviewed_at = datetime.utcnow()
+    
+    # Create notification for farmer
+    notification = Notification(
+        user_id=sale.user_id,
+        notification_type='approval',
+        title='Harvest Sale Approved',
+        message=f'Your harvest sale for {sale.cultivation.crop_name} has been approved. Approved quantity: {sale.approved_quantity} {sale.yield_unit}',
+        related_harvest_sale_id=sale.id
+    )
+    db.session.add(notification)
+    
+    db.session.commit()
+    flash('Harvest sale approved!', 'success')
+    return redirect(url_for('admin.harvest_sales'))
+
+
+@admin_bp.route('/harvest-sales/<int:sale_id>/reject', methods=['POST'])
+@login_required
+@admin_required
+def reject_harvest_sale(sale_id):
+    """Reject harvest sale submission."""
+    sale = HarvestSale.query.get_or_404(sale_id)
+    
+    admin_notes = request.form.get('admin_notes', 'Rejected by admin')
+    
+    sale.status = 'rejected'
+    sale.admin_notes = admin_notes
+    sale.reviewed_by = current_user.id
+    sale.reviewed_at = datetime.utcnow()
+    
+    # Create notification for farmer
+    notification = Notification(
+        user_id=sale.user_id,
+        notification_type='rejection',
+        title='Harvest Sale Rejected',
+        message=f'Your harvest sale for {sale.cultivation.crop_name} has been rejected. Reason: {admin_notes}',
+        related_harvest_sale_id=sale.id
+    )
+    db.session.add(notification)
+    
+    db.session.commit()
+    flash('Harvest sale rejected!', 'success')
+    return redirect(url_for('admin.harvest_sales'))
+
+
+# Crop Master Management
+@admin_bp.route('/crop-master')
+@login_required
+@admin_required
+def crop_master():
+    """List all crops in master database."""
+    crops = CropMaster.query.order_by(CropMaster.crop_name).all()
+    return render_template('admin/crop_master.html', crops=crops)
+
+
+@admin_bp.route('/crop-master/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_crop_master():
+    """Add new crop to master database."""
+    if request.method == 'POST':
+        crop = CropMaster(
+            crop_name=request.form.get('crop_name'),
+            crop_type=request.form.get('crop_type'),
+            scientific_name=request.form.get('scientific_name'),
+            avg_yield_per_acre=float(request.form.get('avg_yield_per_acre')) if request.form.get('avg_yield_per_acre') else None,
+            yield_unit=request.form.get('yield_unit', 'kg'),
+            growth_duration_days=int(request.form.get('growth_duration_days')) if request.form.get('growth_duration_days') else None,
+            water_requirement=request.form.get('water_requirement'),
+            season=request.form.get('season'),
+            description=request.form.get('description'),
+            is_active=request.form.get('is_active') == 'on'
+        )
+        db.session.add(crop)
+        db.session.commit()
+        
+        flash('Crop added to master database!', 'success')
+        return redirect(url_for('admin.crop_master'))
+    
+    return render_template('admin/add_crop_master.html')
+
+
+# Market Demand Dashboard
+@admin_bp.route('/market-demand')
+@login_required
+@admin_required
+def market_demand():
+    """Market demand dashboard."""
+    demand_data = MarketDemandData.query.order_by(MarketDemandData.forecast_date.desc()).all()
+    quotas = AdminQuota.query.filter_by(is_active=True).all()
+    
+    # Calculate alerts
+    alerts = []
+    for quota in quotas:
+        utilization = (quota.allocated_area / quota.total_allowed_area * 100) if quota.total_allowed_area > 0 else 0
+        if utilization > 90:
+            alerts.append({
+                'type': 'danger',
+                'message': f'{quota.crop_name} in {quota.district}: {utilization:.1f}% quota used'
+            })
+        elif utilization > 75:
+            alerts.append({
+                'type': 'warning',
+                'message': f'{quota.crop_name} in {quota.district}: {utilization:.1f}% quota used'
+            })
+    
+    return render_template('admin/market_demand.html', demand_data=demand_data, alerts=alerts, quotas=quotas)
