@@ -38,6 +38,21 @@
 
 <!-- Quick Actions -->
 <div class="grid-3 mb-20">
+    <a href="{{ url_for('admin.quotas') }}" class="action-card">
+        <i class="fas fa-balance-scale"></i>
+        <h3>Cultivation Quotas</h3>
+        <p>Location & season quotas</p>
+    </a>
+    <a href="{{ url_for('admin.harvest_sales') }}" class="action-card">
+        <i class="fas fa-clipboard-check"></i>
+        <h3>Harvest Sales</h3>
+        <p>Approve farmer submissions</p>
+    </a>
+    <a href="{{ url_for('admin.market_demand') }}" class="action-card">
+        <i class="fas fa-chart-line"></i>
+        <h3>Market Demand</h3>
+        <p>Quota utilization & trends</p>
+    </a>
     <a href="{{ url_for('admin.users') }}" class="action-card">
         <i class="fas fa-users"></i>
         <h3>Manage Users</h3>
@@ -50,8 +65,13 @@
     </a>
     <a href="{{ url_for('admin.limits') }}" class="action-card">
         <i class="fas fa-ruler"></i>
-        <h3>Region Limits</h3>
-        <p>Set cultivation limits</p>
+        <h3>Region Limits (Legacy)</h3>
+        <p>Old limit system</p>
+    </a>
+    <a href="{{ url_for('admin.crop_master') }}" class="action-card">
+        <i class="fas fa-seedling"></i>
+        <h3>Crop Master</h3>
+        <p>Manage crop database</p>
     </a>
     <a href="{{ url_for('admin.products') }}" class="action-card">
         <i class="fas fa-shopping-cart"></i>

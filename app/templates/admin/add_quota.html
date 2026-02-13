@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Add Quota - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add Cultivation Quota</h1>
+    <a href="{{ url_for('admin.quotas') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <h3>Geographic Scope</h3>
+        <div class="grid-3">
+            <div class="form-group">
+                <label class="form-label" for="country">Country *</label>
+                <input type="text" id="country" name="country" class="form-control" value="India" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="state">State</label>
+                <input type="text" id="state" name="state" class="form-control" placeholder="e.g., Tamil Nadu">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="district">District</label>
+                <select id="district" name="district" class="form-control">
+                    <option value="">Select District</option>
+                    {% for district in districts %}
+                    <option value="{{ district }}">{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="taluk">Taluk</label>
+                <input type="text" id="taluk" name="taluk" class="form-control" placeholder="Optional">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="village">Village</label>
+                <input type="text" id="village" name="village" class="form-control" placeholder="Optional">
+            </div>
+        </div>
+        
+        <h3 class="mt-20">Crop Details</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <select id="crop_name" name="crop_name" class="form-control" required>
+                    <option value="">Select Crop</option>
+                    {% for crop in crops %}
+                    <option value="{{ crop }}">{{ crop }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <h3 class="mt-20">Harvest Season</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="harvest_season_start">Season Start Date</label>
+                <input type="date" id="harvest_season_start" name="harvest_season_start" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="harvest_season_end">Season End Date</label>
+                <input type="date" id="harvest_season_end" name="harvest_season_end" class="form-control">
+            </div>
+        </div>
+        
+        <h3 class="mt-20">Quota Limits</h3>
+        <div class="grid-3">
+            <div class="form-group">
+                <label class="form-label" for="total_allowed_area">Total Allowed Area *</label>
+                <input type="number" id="total_allowed_area" name="total_allowed_area" class="form-control" 
+                       step="0.01" min="0" required>
+                <p class="form-help">Total cultivation area for this crop</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="area_unit">Area Unit</label>
+                <select id="area_unit" name="area_unit" class="form-control">
+                    <option value="acres">Acres</option>
+                    <option value="hectares">Hectares</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="max_per_farmer">Max Per Farmer</label>
+                <input type="number" id="max_per_farmer" name="max_per_farmer" class="form-control" 
+                       step="0.01" min="0">
+                <p class="form-help">Maximum area per farmer (optional)</p>
+            </div>
+        </div>
+        
+        <h3 class="mt-20">Market Demand (Optional)</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="predicted_demand_volume">Predicted Demand (tonnes)</label>
+                <input type="number" id="predicted_demand_volume" name="predicted_demand_volume" 
+                       class="form-control" step="0.01" min="0">
+            </div>
+        </div>
+        
+        <h3 class="mt-20">Price Guidance (Optional)</h3>
+        <div class="grid-3">
+            <div class="form-group">
+                <label class="form-label" for="min_price_per_unit">Min Price</label>
+                <input type="number" id="min_price_per_unit" name="min_price_per_unit" 
+                       class="form-control" step="0.01" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="max_price_per_unit">Max Price</label>
+                <input type="number" id="max_price_per_unit" name="max_price_per_unit" 
+                       class="form-control" step="0.01" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="price_unit">Price Unit</label>
+                <select id="price_unit" name="price_unit" class="form-control">
+                    <option value="kg">Per Kg</option>
+                    <option value="quintal">Per Quintal</option>
+                    <option value="tonne">Per Tonne</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group mt-20">
+            <label class="form-label">
+                <input type="checkbox" name="is_active" checked> Active
+            </label>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.quotas') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Quota
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -12,36 +12,12 @@
 
 <div class="card">
     <form method="POST" action="{{ url_for('land.add_land') }}">
+        <h3>Basic Information</h3>
         <div class="grid-2">
             <div class="form-group">
                 <label class="form-label" for="name">Land Name *</label>
                 <input type="text" id="name" name="name" class="form-control" 
                        placeholder="e.g., North Field, Main Farm" required>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label" for="country">Country *</label>
-                <select id="country" name="country" class="form-control" required>
-                    <option value="">Select Country</option>
-                    <option value="India">India</option>
-                    <option value="Bangladesh">Bangladesh</option>
-                    <option value="Pakistan">Pakistan</option>
-                    <option value="Nepal">Nepal</option>
-                    <option value="Sri Lanka">Sri Lanka</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label" for="state">State/Province</label>
-                <input type="text" id="state" name="state" class="form-control" 
-                       placeholder="Enter state or province">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label" for="district">District/Region</label>
-                <input type="text" id="district" name="district" class="form-control" 
-                       placeholder="Enter district or region">
             </div>
             
             <div class="form-group">
@@ -60,13 +36,78 @@
                     <option value="gunta">Gunta</option>
                 </select>
             </div>
+        </div>
+        
+        <h3 class="mt-20">Location Details</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="country">Country *</label>
+                <select id="country" name="country" class="form-control" required>
+                    <option value="">Select Country</option>
+                    <option value="India">India</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="Nepal">Nepal</option>
+                    <option value="Sri Lanka">Sri Lanka</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
             
             <div class="form-group">
-                <label class="form-label" for="land_type">Land Type</label>
-                <select id="land_type" name="land_type" class="form-control">
+                <label class="form-label" for="state">State/Province *</label>
+                <input type="text" id="state" name="state" class="form-control" 
+                       placeholder="e.g., Tamil Nadu" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="district">District *</label>
+                <input type="text" id="district" name="district" class="form-control" 
+                       placeholder="e.g., Coimbatore" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="taluk">Taluk/Tehsil</label>
+                <input type="text" id="taluk" name="taluk" class="form-control" 
+                       placeholder="Enter taluk name">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="village">Village *</label>
+                <input type="text" id="village" name="village" class="form-control" 
+                       placeholder="Enter village name" required>
+            </div>
+        </div>
+        
+        <h3 class="mt-20">GPS Location (Optional but Recommended)</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="latitude">Latitude</label>
+                <input type="number" id="latitude" name="latitude" class="form-control" 
+                       placeholder="e.g., 11.0168" step="0.000001" min="-90" max="90">
+                <p class="form-help">Decimal degrees format (-90 to 90)</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="longitude">Longitude</label>
+                <input type="number" id="longitude" name="longitude" class="form-control" 
+                       placeholder="e.g., 76.9558" step="0.000001" min="-180" max="180">
+                <p class="form-help">Decimal degrees format (-180 to 180)</p>
+            </div>
+        </div>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>Tip:</strong> Use your phone's GPS or Google Maps to get accurate coordinates. 
+            This helps admin track cultivation locations.
+        </div>
+        
+        <h3 class="mt-20">Land Characteristics</h3>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="land_type">Land Type *</label>
+                <select id="land_type" name="land_type" class="form-control" required>
                     <option value="">Select Type</option>
-                    <option value="irrigated">Irrigated</option>
-                    <option value="rain-fed">Rain-fed</option>
+                    <option value="Wetland">Wetland (Irrigated)</option>
+                    <option value="Dryland">Dryland (Rain-fed)</option>
                     <option value="mixed">Mixed</option>
                     <option value="orchard">Orchard</option>
                     <option value="plantation">Plantation</option>
@@ -74,41 +115,42 @@
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="soil_type">Soil Type</label>
-                <select id="soil_type" name="soil_type" class="form-control">
+                <label class="form-label" for="soil_type">Soil Type *</label>
+                <select id="soil_type" name="soil_type" class="form-control" required>
                     <option value="">Select Soil Type</option>
-                    <option value="clay">Clay</option>
+                    <option value="Red">Red Soil</option>
+                    <option value="Black">Black Soil (Regur)</option>
+                    <option value="Alluvial">Alluvial Soil</option>
+                    <option value="Sandy">Sandy Soil</option>
+                    <option value="Clay">Clay Soil</option>
                     <option value="loam">Loam</option>
-                    <option value="sandy">Sandy</option>
-                    <option value="black">Black (Regur)</option>
-                    <option value="red">Red Soil</option>
-                    <option value="alluvial">Alluvial</option>
                     <option value="laterite">Laterite</option>
                 </select>
                 <p class="form-help">Soil type helps in crop recommendations</p>
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="climate_type">Climate Type</label>
-                <select id="climate_type" name="climate_type" class="form-control">
+                <label class="form-label" for="climate_type">Climate Type *</label>
+                <select id="climate_type" name="climate_type" class="form-control" required>
                     <option value="">Select Climate</option>
-                    <option value="tropical">Tropical</option>
+                    <option value="Tropical">Tropical</option>
+                    <option value="Semi-Arid">Semi-Arid</option>
+                    <option value="Humid">Humid</option>
                     <option value="subtropical">Sub-tropical</option>
                     <option value="temperate">Temperate</option>
-                    <option value="arid">Arid/Semi-arid</option>
-                    <option value="humid">Humid</option>
                 </select>
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="water_source">Water Source</label>
-                <select id="water_source" name="water_source" class="form-control">
+                <label class="form-label" for="water_source">Water Source *</label>
+                <select id="water_source" name="water_source" class="form-control" required>
                     <option value="">Select Water Source</option>
-                    <option value="well">Well/Borewell</option>
-                    <option value="canal">Canal</option>
+                    <option value="Rain-fed">Rain-fed</option>
+                    <option value="Borewell">Borewell</option>
+                    <option value="Canal">Canal</option>
+                    <option value="Tank">Tank/Pond</option>
                     <option value="river">River</option>
-                    <option value="tank">Tank/Pond</option>
-                    <option value="rain">Rain-fed Only</option>
+                    <option value="well">Well</option>
                     <option value="drip">Drip Irrigation</option>
                     <option value="sprinkler">Sprinkler</option>
                     <option value="multiple">Multiple Sources</option>
@@ -116,7 +158,7 @@
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="previous_crop">Previous Crop</label>
+                <label class="form-label" for="previous_crop">Previous Crop Cultivated</label>
                 <input type="text" id="previous_crop" name="previous_crop" class="form-control" 
                        placeholder="What was grown before?">
                 <p class="form-help">Helps with crop rotation planning</p>
@@ -126,7 +168,7 @@
         <div class="form-group">
             <label class="form-label" for="notes">Additional Notes</label>
             <textarea id="notes" name="notes" class="form-control" 
-                      placeholder="Any other important details about this land..."></textarea>
+                      placeholder="Any other important details about this land..." rows="3"></textarea>
         </div>
         
         <div class="flex-between mt-20">
@@ -137,4 +179,14 @@
         </div>
     </form>
 </div>
+
+<style>
+.alert-info {
+    background-color: #e8f4f8;
+    border-left: 4px solid #3498db;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+</style>
 {% endblock %}

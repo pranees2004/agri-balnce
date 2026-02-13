@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Market Demand - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Market Demand Dashboard</h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Dashboard
+    </a>
+</div>
+
+<!-- Quota Alerts -->
+{% if alerts %}
+<div class="card">
+    <h3>Quota Alerts</h3>
+    {% for alert in alerts %}
+    <div class="alert alert-{{ alert.type }}">
+        <i class="fas fa-exclamation-triangle"></i> {{ alert.message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Active Quotas Overview -->
+<div class="card">
+    <h3>Active Quota Utilization</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Crop</th>
+                <th>Location</th>
+                <th>Total Area</th>
+                <th>Allocated</th>
+                <th>Remaining</th>
+                <th>Utilization</th>
+                <th>Farmers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quota in quotas %}
+            <tr>
+                <td><strong>{{ quota.crop_name }}</strong></td>
+                <td>{{ quota.district or quota.state or quota.country }}</td>
+                <td>{{ quota.total_allowed_area }} {{ quota.area_unit }}</td>
+                <td>{{ quota.allocated_area }} {{ quota.area_unit }}</td>
+                <td>{{ quota.remaining_area() }} {{ quota.area_unit }}</td>
+                <td>
+                    {% set utilization = (quota.allocated_area / quota.total_allowed_area * 100) if quota.total_allowed_area > 0 else 0 %}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ utilization }}%; background-color: {{ '#e74c3c' if utilization > 90 else ('#f39c12' if utilization > 75 else '#27ae60') }};"></div>
+                    </div>
+                    <span>{{ "%.1f"|format(utilization) }}%</span>
+                </td>
+                <td>{{ quota.allocated_farmer_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Market Demand Data -->
+{% if demand_data %}
+<div class="card">
+    <h3>Market Demand Forecasts</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Crop</th>
+                <th>Location</th>
+                <th>Forecast Date</th>
+                <th>Predicted Demand</th>
+                <th>Predicted Supply</th>
+                <th>Current Price</th>
+                <th>Predicted Price</th>
+                <th>Confidence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for demand in demand_data %}
+            <tr>
+                <td><strong>{{ demand.crop_name }}</strong></td>
+                <td>{{ demand.district or demand.state }}</td>
+                <td>{{ demand.forecast_date.strftime('%b %Y') if demand.forecast_date else 'N/A' }}</td>
+                <td>{{ demand.predicted_demand or 'N/A' }} tonnes</td>
+                <td>{{ demand.predicted_supply or 'N/A' }} tonnes</td>
+                <td>₹{{ demand.current_price or 'N/A' }}/{{ demand.price_unit }}</td>
+                <td>₹{{ demand.predicted_price or 'N/A' }}/{{ demand.price_unit }}</td>
+                <td>
+                    {% if demand.confidence_score %}
+                        {{ "%.0f"|format(demand.confidence_score * 100) }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<style>
+.progress-bar {
+    width: 100px;
+    height: 20px;
+    background-color: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.alert-danger {
+    background-color: #fee;
+    border-color: #e74c3c;
+    color: #c0392b;
+}
+
+.alert-warning {
+    background-color: #fef5e7;
+    border-color: #f39c12;
+    color: #d68910;
+}
+</style>
+{% endblock %}

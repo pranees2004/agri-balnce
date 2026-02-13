@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Add Crop - Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Add Crop to Master Database</h1>
+    <a href="{{ url_for('admin.crop_master') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label" for="crop_name">Crop Name *</label>
+                <input type="text" id="crop_name" name="crop_name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="crop_type">Crop Type</label>
+                <select id="crop_type" name="crop_type" class="form-control">
+                    <option value="">Select Type</option>
+                    <option value="Grain">Grain</option>
+                    <option value="Vegetable">Vegetable</option>
+                    <option value="Fruit">Fruit</option>
+                    <option value="Pulse">Pulse</option>
+                    <option value="Oilseed">Oilseed</option>
+                    <option value="Fiber">Fiber</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="scientific_name">Scientific Name</label>
+                <input type="text" id="scientific_name" name="scientific_name" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="avg_yield_per_acre">Average Yield per Acre</label>
+                <input type="number" id="avg_yield_per_acre" name="avg_yield_per_acre" class="form-control" step="0.01">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="yield_unit">Yield Unit</label>
+                <select id="yield_unit" name="yield_unit" class="form-control">
+                    <option value="kg">Kilograms</option>
+                    <option value="quintal">Quintals</option>
+                    <option value="tonne">Tonnes</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="growth_duration_days">Growth Duration (days)</label>
+                <input type="number" id="growth_duration_days" name="growth_duration_days" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="water_requirement">Water Requirement</label>
+                <select id="water_requirement" name="water_requirement" class="form-control">
+                    <option value="">Select</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="season">Season</label>
+                <select id="season" name="season" class="form-control">
+                    <option value="">Select</option>
+                    <option value="Kharif">Kharif (Monsoon)</option>
+                    <option value="Rabi">Rabi (Winter)</option>
+                    <option value="Zaid">Zaid (Summer)</option>
+                    <option value="Year-round">Year-round</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="4"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">
+                <input type="checkbox" name="is_active" checked> Active
+            </label>
+        </div>
+        
+        <div class="flex-between mt-20">
+            <a href="{{ url_for('admin.crop_master') }}" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Crop
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
