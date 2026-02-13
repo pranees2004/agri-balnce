@@ -738,7 +738,7 @@ def cultivation_history():
 @cultivation_bp.route('/<int:cultivation_id>/submit-harvest', methods=['GET', 'POST'])
 @login_required
 def submit_harvest(cultivation_id):
-    """Submit harvest for sale with admin approval."""
+    """Submit harvest for sale with admin-controlled pricing."""
     from app.models import HarvestSale, Notification
     
     cultivation = Cultivation.query.filter_by(
@@ -755,16 +755,22 @@ def submit_harvest(cultivation_id):
         flash('Harvest already submitted for this cultivation. Contact admin to modify.', 'info')
         return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
     
+    # Get admin-set price for this crop, district, and harvest date
+    district = cultivation.land.district or 'Other'
+    harvest_date = cultivation.actual_harvest_date or date.today()
+    admin_price = get_crop_price(cultivation.crop_name, district, harvest_date)
+    
     if request.method == 'POST':
         actual_yield = request.form.get('actual_yield')
         selling_quantity = request.form.get('selling_quantity')
-        selling_price = request.form.get('selling_price_expectation')
         contact_number = request.form.get('contact_number')
         photos = request.form.get('photos')  # JSON or comma-separated URLs
         
         if not actual_yield or not selling_quantity:
             flash('Please provide actual yield and selling quantity.', 'error')
-            return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+            return render_template('cultivation/submit_harvest.html', 
+                                   cultivation=cultivation,
+                                   admin_price=admin_price)
         
         actual_yield = float(actual_yield)
         selling_quantity = float(selling_quantity)
@@ -773,21 +779,35 @@ def submit_harvest(cultivation_id):
         if cultivation.max_allowed_sale_quantity:
             if selling_quantity > cultivation.max_allowed_sale_quantity:
                 flash(f'Selling quantity cannot exceed {cultivation.max_allowed_sale_quantity} {cultivation.yield_unit} (based on allocated area).', 'error')
-                return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+                return render_template('cultivation/submit_harvest.html', 
+                                       cultivation=cultivation,
+                                       admin_price=admin_price)
         
         # Validate selling quantity against actual yield (with tolerance)
         if selling_quantity > actual_yield * (1 + HARVEST_QUANTITY_TOLERANCE):
             flash(f'Selling quantity cannot exceed actual yield ({actual_yield} {cultivation.yield_unit}) plus {HARVEST_QUANTITY_TOLERANCE*100}% tolerance.', 'error')
-            return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+            return render_template('cultivation/submit_harvest.html', 
+                                   cultivation=cultivation,
+                                   admin_price=admin_price)
         
-        # Create harvest sale submission
+        # Use admin-set price if available, otherwise allow farmer expectation
+        selling_price = None
+        if admin_price:
+            selling_price = admin_price.price_per_unit
+        else:
+            # Allow farmer to set expectation if no admin price available
+            selling_price_input = request.form.get('selling_price_expectation')
+            if selling_price_input:
+                selling_price = float(selling_price_input)
+        
+        # Create harvest sale submission with admin price
         harvest_sale = HarvestSale(
             cultivation_id=cultivation_id,
             user_id=current_user.id,
             actual_yield_quantity=actual_yield,
             yield_unit=cultivation.yield_unit,
             selling_quantity=selling_quantity,
-            selling_price_expectation=float(selling_price) if selling_price else None,
+            selling_price_expectation=selling_price,
             contact_number=contact_number or current_user.mobile,
             photos=photos,
             status='pending'
@@ -816,4 +836,6 @@ def submit_harvest(cultivation_id):
         flash('Harvest submitted for admin approval!', 'success')
         return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
     
-    return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
+    return render_template('cultivation/submit_harvest.html', 
+                           cultivation=cultivation,
+                           admin_price=admin_price)

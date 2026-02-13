@@ -19,7 +19,7 @@
                     <th>Type</th>
                     <th>District</th>
                     <th>Price/Unit</th>
-                    <th>Units Sold</th>
+                    <th>Valid Period</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -31,7 +31,17 @@
                     <td>{{ price.crop_type or '-' }}</td>
                     <td>{{ price.district }}</td>
                     <td>₹{{ price.price_per_unit }}/{{ price.unit }}</td>
-                    <td>{{ price.units_sold }}</td>
+                    <td>
+                        {% if price.valid_from and price.valid_to %}
+                            {{ price.valid_from.strftime('%d-%b-%Y') }} to {{ price.valid_to.strftime('%d-%b-%Y') }}
+                        {% elif price.valid_from %}
+                            From {{ price.valid_from.strftime('%d-%b-%Y') }}
+                        {% elif price.valid_to %}
+                            Until {{ price.valid_to.strftime('%d-%b-%Y') }}
+                        {% else %}
+                            Always Valid
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="badge badge-{{ 'success' if price.is_active else 'error' }}">
                             {{ 'Active' if price.is_active else 'Inactive' }}
