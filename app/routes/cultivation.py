@@ -46,19 +46,30 @@ def get_crop_price(crop_name, district, harvest_date=None):
     # If harvest date provided, filter by date period
     if harvest_date:
         if isinstance(harvest_date, str):
-            harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
+            try:
+                harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
+            except ValueError:
+                # If date format is invalid, return without date filtering
+                # This allows the function to gracefully handle invalid dates
+                # and return any active price for the crop/district
+                pass
+            except Exception:
+                # Handle any other parsing errors
+                pass
         
-        query = query.filter(
-            db.or_(
-                CropPrice.valid_from.is_(None),
-                CropPrice.valid_from <= harvest_date
+        # Only apply date filtering if harvest_date was successfully parsed
+        if isinstance(harvest_date, date):
+            query = query.filter(
+                db.or_(
+                    CropPrice.valid_from.is_(None),
+                    CropPrice.valid_from <= harvest_date
+                )
+            ).filter(
+                db.or_(
+                    CropPrice.valid_to.is_(None),
+                    CropPrice.valid_to >= harvest_date
+                )
             )
-        ).filter(
-            db.or_(
-                CropPrice.valid_to.is_(None),
-                CropPrice.valid_to >= harvest_date
-            )
-        )
     
     price = query.first()
     return price
@@ -611,7 +622,10 @@ def start_cultivation():
             # Generate cultivation approval ID
             approval_id = generate_cultivation_approval_id()
             
-            # Get AI recommendations internally (not shown to user)
+            # Get AI recommendations internally for yield estimation
+            # Note: Recommendations are not displayed to user but are used for:
+            # 1. Calculating estimated yield and max sale quantity
+            # 2. Storing in database for admin reference and future viewing
             recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
             
             # Calculate estimated yield and max allowed sale quantity
