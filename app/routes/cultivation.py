@@ -31,13 +31,36 @@ WATER_AVAILABILITY_FACTORS = {
 }
 
 
-def get_crop_price(crop_name, district):
-    """Get the current price for a crop in a specific district."""
-    price = CropPrice.query.filter_by(
+def get_crop_price(crop_name, district, harvest_date=None):
+    """Get the current price for a crop in a specific district.
+    
+    If harvest_date is provided, returns price valid for that date period.
+    Otherwise returns any active price for the crop/district.
+    """
+    query = CropPrice.query.filter_by(
         crop_name=crop_name,
         district=district,
         is_active=True
-    ).first()
+    )
+    
+    # If harvest date provided, filter by date period
+    if harvest_date:
+        if isinstance(harvest_date, str):
+            harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
+        
+        query = query.filter(
+            db.or_(
+                CropPrice.valid_from.is_(None),
+                CropPrice.valid_from <= harvest_date
+            )
+        ).filter(
+            db.or_(
+                CropPrice.valid_to.is_(None),
+                CropPrice.valid_to >= harvest_date
+            )
+        )
+    
+    price = query.first()
     return price
 
 
@@ -525,7 +548,7 @@ def active_cultivations():
 @cultivation_bp.route('/start', methods=['GET', 'POST'])
 @login_required
 def start_cultivation():
-    """Start new cultivation with AI advisory and quota enforcement."""
+    """Start new cultivation with quota enforcement and admin-controlled pricing."""
     lands = Land.query.filter_by(user_id=current_user.id).all()
     
     if not lands:
@@ -533,7 +556,6 @@ def start_cultivation():
         return redirect(url_for('land.add_land'))
     
     selected_land = None
-    recommendations = None
     quota_check_result = None
     
     if request.method == 'POST':
@@ -544,34 +566,6 @@ def start_cultivation():
         planting_date = request.form.get('planting_date')
         expected_harvest_date = request.form.get('expected_harvest_date')
         notes = request.form.get('notes')
-        
-        if 'get_recommendations' in request.form:
-            # Get AI recommendations with quota checking
-            selected_land = Land.query.filter_by(
-                id=land_id, user_id=current_user.id
-            ).first()
-            if selected_land:
-                area_requested = float(area_to_use) if area_to_use else selected_land.land_size
-                recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
-                
-                # Check quota availability
-                if crop_name:
-                    quota_allowed, quota_message, quota_obj = check_admin_quota(
-                        selected_land, crop_name, area_requested
-                    )
-                    quota_check_result = {
-                        'allowed': quota_allowed,
-                        'message': quota_message,
-                        'quota': quota_obj
-                    }
-            
-            return render_template(
-                'cultivation/start.html',
-                lands=lands,
-                selected_land=selected_land,
-                recommendations=recommendations,
-                quota_check=quota_check_result
-            )
         
         if 'save_cultivation' in request.form:
             if not land_id or not crop_name or not area_to_use:
@@ -601,8 +595,6 @@ def start_cultivation():
             if not quota_allowed:
                 flash(f'Cultivation blocked by admin quota: {quota_message}', 'error')
                 
-                # Get recommendations for alternative crops
-                recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
                 quota_check_result = {
                     'allowed': False,
                     'message': quota_message,
@@ -613,14 +605,13 @@ def start_cultivation():
                     'cultivation/start.html',
                     lands=lands,
                     selected_land=selected_land,
-                    recommendations=recommendations,
                     quota_check=quota_check_result
                 )
             
             # Generate cultivation approval ID
             approval_id = generate_cultivation_approval_id()
             
-            # Get AI recommendations
+            # Get AI recommendations internally (not shown to user)
             recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
             
             # Calculate estimated yield and max allowed sale quantity
@@ -683,7 +674,6 @@ def start_cultivation():
         'cultivation/start.html',
         lands=lands,
         selected_land=selected_land,
-        recommendations=recommendations,
         quota_check=quota_check_result
     )
 

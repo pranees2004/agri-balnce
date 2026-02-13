@@ -189,14 +189,35 @@ def prices():
 @login_required
 @admin_required
 def add_price():
-    """Add new crop price."""
+    """Add new crop price with period validity."""
     if request.method == 'POST':
+        # Handle date fields
+        valid_from_str = request.form.get('valid_from')
+        valid_to_str = request.form.get('valid_to')
+        
+        valid_from = None
+        valid_to = None
+        
+        if valid_from_str:
+            try:
+                valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        if valid_to_str:
+            try:
+                valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
         crop_price = CropPrice(
             crop_name=request.form.get('crop_name'),
             crop_type=request.form.get('crop_type'),
             district=request.form.get('district'),
             price_per_unit=float(request.form.get('price_per_unit', 0)),
             unit=request.form.get('unit', 'kg'),
+            valid_from=valid_from,
+            valid_to=valid_to,
             is_active=request.form.get('is_active') == 'on'
         )
         db.session.add(crop_price)
@@ -216,10 +237,30 @@ def add_price():
 @login_required
 @admin_required
 def edit_price(price_id):
-    """Edit crop price."""
+    """Edit crop price with period validity."""
     crop_price = CropPrice.query.get_or_404(price_id)
     
     if request.method == 'POST':
+        # Handle date fields
+        valid_from_str = request.form.get('valid_from')
+        valid_to_str = request.form.get('valid_to')
+        
+        if valid_from_str:
+            try:
+                crop_price.valid_from = datetime.strptime(valid_from_str, '%Y-%m-%d').date()
+            except ValueError:
+                crop_price.valid_from = None
+        else:
+            crop_price.valid_from = None
+        
+        if valid_to_str:
+            try:
+                crop_price.valid_to = datetime.strptime(valid_to_str, '%Y-%m-%d').date()
+            except ValueError:
+                crop_price.valid_to = None
+        else:
+            crop_price.valid_to = None
+        
         crop_price.crop_name = request.form.get('crop_name', crop_price.crop_name)
         crop_price.crop_type = request.form.get('crop_type', crop_price.crop_type)
         crop_price.district = request.form.get('district', crop_price.district)
