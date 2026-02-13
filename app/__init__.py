@@ -1,5 +1,5 @@
 """AgriBalance Flask Application Factory."""
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import config
@@ -43,6 +43,23 @@ def create_app(config_name='default'):
     app.register_blueprint(news_bp, url_prefix='/news')
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    
+    # Register error handlers
+    @app.errorhandler(404)
+    def not_found_error(error):
+        """Handle 404 errors - page not found."""
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        """Handle 500 errors - internal server error."""
+        db.session.rollback()  # Rollback any pending database transactions
+        return render_template('errors/500.html'), 500
+    
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        """Handle 403 errors - forbidden access."""
+        return render_template('errors/404.html'), 404  # Use 404 template for now
     
     # Create database tables
     with app.app_context():
