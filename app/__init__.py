@@ -59,7 +59,7 @@ def create_app(config_name='default'):
     @app.errorhandler(403)
     def forbidden_error(error):
         """Handle 403 errors - forbidden access."""
-        return render_template('errors/404.html'), 403  # Use 404 template for now
+        return render_template('errors/404.html'), 404  # Use 404 template for now
     
     # Create database tables
     with app.app_context():
