@@ -26,6 +26,10 @@ def add_land():
         country = request.form.get('country')
         state = request.form.get('state')
         district = request.form.get('district')
+        taluk = request.form.get('taluk')
+        village = request.form.get('village')
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
         land_size = request.form.get('land_size')
         land_size_unit = request.form.get('land_size_unit', 'acres')
         land_type = request.form.get('land_type')
@@ -45,6 +49,10 @@ def add_land():
             country=country,
             state=state,
             district=district,
+            taluk=taluk,
+            village=village,
+            latitude=float(latitude) if latitude else None,
+            longitude=float(longitude) if longitude else None,
             land_size=float(land_size),
             land_size_unit=land_size_unit,
             land_type=land_type,
@@ -83,6 +91,14 @@ def edit_land(land_id):
         land.country = request.form.get('country', land.country)
         land.state = request.form.get('state', land.state)
         land.district = request.form.get('district', land.district)
+        land.taluk = request.form.get('taluk', land.taluk)
+        land.village = request.form.get('village', land.village)
+        
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
+        land.latitude = float(latitude) if latitude else land.latitude
+        land.longitude = float(longitude) if longitude else land.longitude
+        
         land.land_size = float(request.form.get('land_size', land.land_size))
         land.land_size_unit = request.form.get('land_size_unit', land.land_size_unit)
         land.land_type = request.form.get('land_type', land.land_type)
