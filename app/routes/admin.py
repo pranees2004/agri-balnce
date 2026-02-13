@@ -715,14 +715,34 @@ def edit_quota(quota_id):
     quota = AdminQuota.query.get_or_404(quota_id)
     
     if request.method == 'POST':
+        # Parse dates with error handling
+        harvest_start_str = request.form.get('harvest_season_start')
+        harvest_end_str = request.form.get('harvest_season_end')
+        
+        if harvest_start_str:
+            try:
+                quota.harvest_season_start = datetime.strptime(harvest_start_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid harvest season start date format. Please use YYYY-MM-DD.', 'error')
+                return render_template('admin/edit_quota.html', quota=quota, districts=TAMIL_NADU_DISTRICTS, crops=COMMON_CROPS)
+        else:
+            quota.harvest_season_start = None
+        
+        if harvest_end_str:
+            try:
+                quota.harvest_season_end = datetime.strptime(harvest_end_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid harvest season end date format. Please use YYYY-MM-DD.', 'error')
+                return render_template('admin/edit_quota.html', quota=quota, districts=TAMIL_NADU_DISTRICTS, crops=COMMON_CROPS)
+        else:
+            quota.harvest_season_end = None
+        
         quota.country = request.form.get('country', quota.country)
         quota.state = request.form.get('state', quota.state)
         quota.district = request.form.get('district', quota.district)
         quota.taluk = request.form.get('taluk', quota.taluk)
         quota.village = request.form.get('village', quota.village)
         quota.crop_name = request.form.get('crop_name', quota.crop_name)
-        quota.harvest_season_start = datetime.strptime(request.form.get('harvest_season_start'), '%Y-%m-%d').date() if request.form.get('harvest_season_start') else quota.harvest_season_start
-        quota.harvest_season_end = datetime.strptime(request.form.get('harvest_season_end'), '%Y-%m-%d').date() if request.form.get('harvest_season_end') else quota.harvest_season_end
         quota.total_allowed_area = float(request.form.get('total_allowed_area', quota.total_allowed_area))
         quota.area_unit = request.form.get('area_unit', quota.area_unit)
         quota.max_per_farmer = float(request.form.get('max_per_farmer')) if request.form.get('max_per_farmer') else None
@@ -884,6 +904,44 @@ def add_crop_master():
         return redirect(url_for('admin.crop_master'))
     
     return render_template('admin/add_crop_master.html')
+
+
+@admin_bp.route('/crop-master/<int:crop_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_crop_master(crop_id):
+    """Edit crop in master database."""
+    crop = CropMaster.query.get_or_404(crop_id)
+    
+    if request.method == 'POST':
+        crop.crop_name = request.form.get('crop_name', crop.crop_name)
+        crop.crop_type = request.form.get('crop_type', crop.crop_type)
+        crop.scientific_name = request.form.get('scientific_name', crop.scientific_name)
+        crop.avg_yield_per_acre = float(request.form.get('avg_yield_per_acre')) if request.form.get('avg_yield_per_acre') else crop.avg_yield_per_acre
+        crop.yield_unit = request.form.get('yield_unit', crop.yield_unit)
+        crop.growth_duration_days = int(request.form.get('growth_duration_days')) if request.form.get('growth_duration_days') else crop.growth_duration_days
+        crop.water_requirement = request.form.get('water_requirement', crop.water_requirement)
+        crop.season = request.form.get('season', crop.season)
+        crop.description = request.form.get('description', crop.description)
+        crop.is_active = request.form.get('is_active') == 'on'
+        
+        db.session.commit()
+        flash('Crop updated in master database!', 'success')
+        return redirect(url_for('admin.crop_master'))
+    
+    return render_template('admin/edit_crop_master.html', crop=crop)
+
+
+@admin_bp.route('/crop-master/<int:crop_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_crop_master(crop_id):
+    """Delete crop from master database."""
+    crop = CropMaster.query.get_or_404(crop_id)
+    db.session.delete(crop)
+    db.session.commit()
+    flash('Crop deleted from master database!', 'success')
+    return redirect(url_for('admin.crop_master'))
 
 
 # Market Demand Dashboard
