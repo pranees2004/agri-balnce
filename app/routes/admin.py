@@ -573,29 +573,50 @@ def quotas():
 def add_quota():
     """Add new admin quota."""
     if request.method == 'POST':
-        quota = AdminQuota(
-            country=request.form.get('country'),
-            state=request.form.get('state'),
-            district=request.form.get('district'),
-            taluk=request.form.get('taluk'),
-            village=request.form.get('village'),
-            crop_name=request.form.get('crop_name'),
-            harvest_season_start=datetime.strptime(request.form.get('harvest_season_start'), '%Y-%m-%d').date() if request.form.get('harvest_season_start') else None,
-            harvest_season_end=datetime.strptime(request.form.get('harvest_season_end'), '%Y-%m-%d').date() if request.form.get('harvest_season_end') else None,
-            total_allowed_area=float(request.form.get('total_allowed_area', 0)),
-            area_unit=request.form.get('area_unit', 'acres'),
-            max_per_farmer=float(request.form.get('max_per_farmer')) if request.form.get('max_per_farmer') else None,
-            predicted_demand_volume=float(request.form.get('predicted_demand_volume')) if request.form.get('predicted_demand_volume') else None,
-            min_price_per_unit=float(request.form.get('min_price_per_unit')) if request.form.get('min_price_per_unit') else None,
-            max_price_per_unit=float(request.form.get('max_price_per_unit')) if request.form.get('max_price_per_unit') else None,
-            price_unit=request.form.get('price_unit', 'kg'),
-            is_active=request.form.get('is_active') == 'on'
-        )
-        db.session.add(quota)
-        db.session.commit()
-        
-        flash('Admin quota added successfully!', 'success')
-        return redirect(url_for('admin.quotas'))
+        try:
+            # Parse dates with error handling
+            harvest_start = None
+            harvest_end = None
+            if request.form.get('harvest_season_start'):
+                try:
+                    harvest_start = datetime.strptime(request.form.get('harvest_season_start'), '%Y-%m-%d').date()
+                except ValueError:
+                    flash('Invalid harvest season start date format. Please use YYYY-MM-DD.', 'error')
+                    return render_template('admin/add_quota.html', districts=TAMIL_NADU_DISTRICTS, crops=COMMON_CROPS)
+            
+            if request.form.get('harvest_season_end'):
+                try:
+                    harvest_end = datetime.strptime(request.form.get('harvest_season_end'), '%Y-%m-%d').date()
+                except ValueError:
+                    flash('Invalid harvest season end date format. Please use YYYY-MM-DD.', 'error')
+                    return render_template('admin/add_quota.html', districts=TAMIL_NADU_DISTRICTS, crops=COMMON_CROPS)
+            
+            quota = AdminQuota(
+                country=request.form.get('country'),
+                state=request.form.get('state'),
+                district=request.form.get('district'),
+                taluk=request.form.get('taluk'),
+                village=request.form.get('village'),
+                crop_name=request.form.get('crop_name'),
+                harvest_season_start=harvest_start,
+                harvest_season_end=harvest_end,
+                total_allowed_area=float(request.form.get('total_allowed_area', 0)),
+                area_unit=request.form.get('area_unit', 'acres'),
+                max_per_farmer=float(request.form.get('max_per_farmer')) if request.form.get('max_per_farmer') else None,
+                predicted_demand_volume=float(request.form.get('predicted_demand_volume')) if request.form.get('predicted_demand_volume') else None,
+                min_price_per_unit=float(request.form.get('min_price_per_unit')) if request.form.get('min_price_per_unit') else None,
+                max_price_per_unit=float(request.form.get('max_price_per_unit')) if request.form.get('max_price_per_unit') else None,
+                price_unit=request.form.get('price_unit', 'kg'),
+                is_active=request.form.get('is_active') == 'on'
+            )
+            db.session.add(quota)
+            db.session.commit()
+            
+            flash('Admin quota added successfully!', 'success')
+            return redirect(url_for('admin.quotas'))
+        except ValueError as e:
+            flash(f'Invalid number format: {str(e)}', 'error')
+            return render_template('admin/add_quota.html', districts=TAMIL_NADU_DISTRICTS, crops=COMMON_CROPS)
     
     return render_template(
         'admin/add_quota.html',

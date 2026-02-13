@@ -11,10 +11,10 @@
 </div>
 
 <div class="tabs">
-    <button class="tab-btn active" onclick="filterSales('all')">All</button>
-    <button class="tab-btn" onclick="filterSales('pending')">Pending</button>
-    <button class="tab-btn" onclick="filterSales('approved')">Approved</button>
-    <button class="tab-btn" onclick="filterSales('rejected')">Rejected</button>
+    <button class="tab-btn active" onclick="filterSales('all', event)">All</button>
+    <button class="tab-btn" onclick="filterSales('pending', event)">Pending</button>
+    <button class="tab-btn" onclick="filterSales('approved', event)">Approved</button>
+    <button class="tab-btn" onclick="filterSales('rejected', event)">Rejected</button>
 </div>
 
 {% if sales %}
@@ -78,12 +78,14 @@
 {% endif %}
 
 <script>
-function filterSales(status) {
+function filterSales(status, event) {
     const rows = document.querySelectorAll('.sale-row');
     const buttons = document.querySelectorAll('.tab-btn');
     
     buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
     rows.forEach(row => {
         if (status === 'all' || row.dataset.status === status) {

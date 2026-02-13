@@ -355,8 +355,10 @@ class AdminQuota(db.Model):
         if not self.is_active:
             return False, "Quota is not active"
         
-        if self.remaining_area() < requested_area:
-            return False, f"Only {self.remaining_area():.2f} {self.area_unit} available"
+        # Calculate remaining once to avoid race conditions
+        remaining = self.remaining_area()
+        if remaining < requested_area:
+            return False, f"Only {remaining:.2f} {self.area_unit} available"
         
         if self.max_per_farmer and requested_area > self.max_per_farmer:
             return False, f"Maximum {self.max_per_farmer} {self.area_unit} per farmer"

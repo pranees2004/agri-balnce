@@ -13,19 +13,21 @@ cultivation_bp = Blueprint('cultivation', __name__)
 HARVEST_QUANTITY_TOLERANCE = 0.05
 
 # Yield estimation factors (based on agricultural research averages)
+# Keys use lowercase to match normalized input
 SOIL_QUALITY_FACTORS = {
     'loam': 1.1,        # Better drainage and nutrient retention
     'alluvial': 1.1,    # Fertile river-deposited soil
     'sandy': 0.9,       # Lower water and nutrient retention
-    'clay': 1.0,        # Standard baseline
+    'red': 1.0,         # Standard baseline
     'black': 1.0,       # Standard baseline
-    'red': 1.0          # Standard baseline
+    'clay': 1.0         # Standard baseline
 }
 
 WATER_AVAILABILITY_FACTORS = {
     'borewell': 1.05,   # Reliable water supply
     'canal': 1.05,      # Assured irrigation
-    'rain-fed': 0.85    # Dependent on rainfall
+    'rain-fed': 0.85,   # Dependent on rainfall
+    'rain': 0.85        # Rain-fed alternative key
 }
 
 
@@ -378,7 +380,11 @@ def get_ai_recommendations(land, selected_crop=None, requested_area=None):
     
     # Soil suitability
     if selected_crop:
-        soil_suitable = soil_type in ['loam', 'alluvial', 'black'] or selected_crop.lower() in soil_crops.get(soil_type, [])
+        # Normalize for case-insensitive comparison
+        soil_suitable = (
+            soil_type in SOIL_QUALITY_FACTORS or 
+            selected_crop in soil_crops.get(soil_type, [])
+        )
         if not soil_suitable:
             risk_factors.append('Soil type may not be ideal for selected crop')
             risk_score += 1
