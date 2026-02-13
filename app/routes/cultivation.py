@@ -684,11 +684,33 @@ def start_cultivation():
                 flash(f'Error starting cultivation: {str(e)}', 'error')
                 return render_template('cultivation/start.html', lands=lands)
     
+    # Query available quotas based on user's land locations
+    land_districts = set(land.district for land in lands if land.district)
+    land_states = set(land.state for land in lands if land.state)
+    land_countries = set(land.country for land in lands if land.country)
+
+    quota_filters = []
+    if land_districts:
+        quota_filters.append(AdminQuota.district.in_(land_districts))
+    if land_states:
+        quota_filters.append(AdminQuota.state.in_(land_states))
+    if land_countries:
+        quota_filters.append(AdminQuota.country.in_(land_countries))
+
+    if quota_filters:
+        available_quotas = AdminQuota.query.filter(
+            AdminQuota.is_active == True,
+            db.or_(*quota_filters)
+        ).all()
+    else:
+        available_quotas = []
+
     return render_template(
         'cultivation/start.html',
         lands=lands,
         selected_land=selected_land,
-        quota_check=quota_check_result
+        quota_check=quota_check_result,
+        available_quotas=available_quotas
     )
 
 

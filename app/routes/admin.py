@@ -644,9 +644,10 @@ def lands():
 @login_required
 @admin_required
 def quotas():
-    """List all admin quotas."""
+    """List all admin quotas and region limits."""
     quotas = AdminQuota.query.order_by(AdminQuota.created_at.desc()).all()
-    return render_template('admin/quotas.html', quotas=quotas)
+    region_limits = RegionLimit.query.order_by(RegionLimit.district, RegionLimit.crop_name).all()
+    return render_template('admin/quotas.html', quotas=quotas, region_limits=region_limits)
 
 
 @admin_bp.route('/quotas/add', methods=['GET', 'POST'])
@@ -968,4 +969,5 @@ def market_demand():
                 'message': f'{quota.crop_name} in {quota.district}: {utilization:.1f}% quota used'
             })
     
-    return render_template('admin/market_demand.html', demand_data=demand_data, alerts=alerts, quotas=quotas)
+    crops = CropMaster.query.order_by(CropMaster.crop_name).all()
+    return render_template('admin/market_demand.html', demand_data=demand_data, alerts=alerts, quotas=quotas, crops=crops)

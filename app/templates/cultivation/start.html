@@ -122,4 +122,46 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Available Quotas Section -->
+{% if available_quotas %}
+<div class="card" style="margin-top: 1rem;">
+    <h3 class="card-title mb-20">
+        <i class="fas fa-balance-scale"></i> Available Quotas for Your Locations
+    </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Crop</th>
+                <th>Location</th>
+                <th>Total Area</th>
+                <th>Remaining</th>
+                <th>Max Per Farmer</th>
+                <th>Season</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quota in available_quotas %}
+            <tr>
+                <td><strong>{{ quota.crop_name }}</strong></td>
+                <td>
+                    {% if quota.district %}{{ quota.district }}{% endif %}
+                    {% if quota.state %}, {{ quota.state }}{% endif %}
+                </td>
+                <td>{{ quota.total_allowed_area }} {{ quota.area_unit }}</td>
+                <td>{{ quota.remaining_area() }} {{ quota.area_unit }}</td>
+                <td>{{ quota.max_per_farmer or 'No limit' }} {{ quota.area_unit if quota.max_per_farmer else '' }}</td>
+                <td>
+                    {% if quota.harvest_season_start %}
+                        {{ quota.harvest_season_start.strftime('%b %Y') }} - {{ quota.harvest_season_end.strftime('%b %Y') if quota.harvest_season_end else 'Ongoing' }}
+                    {% else %}
+                        Year-round
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 {% endblock %}
