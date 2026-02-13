@@ -918,9 +918,11 @@ def edit_crop_master(crop_id):
         crop.crop_name = request.form.get('crop_name', crop.crop_name)
         crop.crop_type = request.form.get('crop_type', crop.crop_type)
         crop.scientific_name = request.form.get('scientific_name', crop.scientific_name)
-        crop.avg_yield_per_acre = float(request.form.get('avg_yield_per_acre')) if request.form.get('avg_yield_per_acre') else crop.avg_yield_per_acre
+        avg_yield = request.form.get('avg_yield_per_acre', '').strip()
+        crop.avg_yield_per_acre = float(avg_yield) if avg_yield else crop.avg_yield_per_acre
         crop.yield_unit = request.form.get('yield_unit', crop.yield_unit)
-        crop.growth_duration_days = int(request.form.get('growth_duration_days')) if request.form.get('growth_duration_days') else crop.growth_duration_days
+        growth_days = request.form.get('growth_duration_days', '').strip()
+        crop.growth_duration_days = int(growth_days) if growth_days else crop.growth_duration_days
         crop.water_requirement = request.form.get('water_requirement', crop.water_requirement)
         crop.season = request.form.get('season', crop.season)
         crop.description = request.form.get('description', crop.description)
