@@ -9,6 +9,25 @@ from app.models import Land, Cultivation, CropPrice, RegionLimit, AdminQuota, Cr
 
 cultivation_bp = Blueprint('cultivation', __name__)
 
+# Tolerance for quantity variations (5% to account for measurement inaccuracies)
+HARVEST_QUANTITY_TOLERANCE = 0.05
+
+# Yield estimation factors (based on agricultural research averages)
+SOIL_QUALITY_FACTORS = {
+    'loam': 1.1,        # Better drainage and nutrient retention
+    'alluvial': 1.1,    # Fertile river-deposited soil
+    'sandy': 0.9,       # Lower water and nutrient retention
+    'clay': 1.0,        # Standard baseline
+    'black': 1.0,       # Standard baseline
+    'red': 1.0          # Standard baseline
+}
+
+WATER_AVAILABILITY_FACTORS = {
+    'borewell': 1.05,   # Reliable water supply
+    'canal': 1.05,      # Assured irrigation
+    'rain-fed': 0.85    # Dependent on rainfall
+}
+
 
 def get_crop_price(crop_name, district):
     """Get the current price for a crop in a specific district."""
@@ -321,18 +340,17 @@ def get_ai_recommendations(land, selected_crop=None, requested_area=None):
     if selected_crop and requested_area:
         crop_master = CropMaster.query.filter_by(crop_name=selected_crop, is_active=True).first()
         if crop_master and crop_master.avg_yield_per_acre:
-            # Apply soil and water adjustments
-            soil_factor = 1.0
-            if soil_type in ['loam', 'alluvial']:
-                soil_factor = 1.1  # Better soils
-            elif soil_type in ['sandy']:
-                soil_factor = 0.9  # Less fertile
+            # Apply soil and water adjustments using documented factors
+            soil_factor = SOIL_QUALITY_FACTORS.get(soil_type, 1.0)
             
+            # Extract base water source type for factor lookup
             water_factor = 1.0
-            if land.water_source and 'borewell' in land.water_source.lower():
-                water_factor = 1.05  # Good irrigation
-            elif land.water_source and 'rain-fed' in land.water_source.lower():
-                water_factor = 0.85  # Dependent on rainfall
+            if land.water_source:
+                water_source_lower = land.water_source.lower()
+                for key, factor in WATER_AVAILABILITY_FACTORS.items():
+                    if key in water_source_lower:
+                        water_factor = factor
+                        break
             
             estimated_yield = crop_master.avg_yield_per_acre * requested_area * soil_factor * water_factor
             recommendations['expected_yield'] = {
@@ -341,11 +359,13 @@ def get_ai_recommendations(land, selected_crop=None, requested_area=None):
                 'per_acre': round(crop_master.avg_yield_per_acre * soil_factor * water_factor, 2)
             }
             
-            # Expected harvest window
+            # Expected harvest window based on planting date or current date
             if crop_master.growth_duration_days:
+                # Use current date as projection basis
                 start_date = datetime.utcnow()
                 end_date = start_date + timedelta(days=crop_master.growth_duration_days)
                 recommendations['expected_harvest_window'] = f"{start_date.strftime('%B %Y')} - {end_date.strftime('%B %Y')}"
+                recommendations['growth_info'] = f"Projected {crop_master.growth_duration_days} days from cultivation start"
     
     # Risk probability assessment
     risk_factors = []
@@ -602,8 +622,8 @@ def start_cultivation():
             max_sale_qty = None
             if recommendations.get('expected_yield'):
                 estimated_yield = recommendations['expected_yield']['quantity']
-                # Allow 105% of estimated yield for sales (measurement tolerance)
-                max_sale_qty = estimated_yield * 1.05
+                # Allow tolerance for measurement variations (defined constant)
+                max_sale_qty = estimated_yield * (1 + HARVEST_QUANTITY_TOLERANCE)
             
             # Create cultivation record with quota reservation
             try:
@@ -736,7 +756,7 @@ def submit_harvest(cultivation_id):
     # Check if already submitted
     existing_sale = HarvestSale.query.filter_by(cultivation_id=cultivation_id).first()
     if existing_sale:
-        flash('Harvest already submitted for this cultivation.', 'info')
+        flash('Harvest already submitted for this cultivation. Contact admin to modify.', 'info')
         return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
     
     if request.method == 'POST':
@@ -759,9 +779,9 @@ def submit_harvest(cultivation_id):
                 flash(f'Selling quantity cannot exceed {cultivation.max_allowed_sale_quantity} {cultivation.yield_unit} (based on allocated area).', 'error')
                 return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
         
-        # Validate selling quantity against actual yield
-        if selling_quantity > actual_yield * 1.05:  # 5% tolerance
-            flash(f'Selling quantity cannot exceed actual yield ({actual_yield} {cultivation.yield_unit}) plus 5% tolerance.', 'error')
+        # Validate selling quantity against actual yield (with tolerance)
+        if selling_quantity > actual_yield * (1 + HARVEST_QUANTITY_TOLERANCE):
+            flash(f'Selling quantity cannot exceed actual yield ({actual_yield} {cultivation.yield_unit}) plus {HARVEST_QUANTITY_TOLERANCE*100}% tolerance.', 'error')
             return render_template('cultivation/submit_harvest.html', cultivation=cultivation)
         
         # Create harvest sale submission
