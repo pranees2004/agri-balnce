@@ -1,6 +1,6 @@
 """Settings routes for AgriBalance."""
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from app import db
 
 settings_bp = Blueprint('settings', __name__)
@@ -108,3 +108,12 @@ def delete_account():
     
     flash('Account deletion cancelled.', 'info')
     return redirect(url_for('settings.index'))
+
+
+@settings_bp.route('/logout')
+@login_required
+def logout():
+    """Logout user."""
+    logout_user()
+    flash('You have been logged out successfully.', 'success')
+    return redirect(url_for('main.index'))

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ other_user.name }} - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="chat-header">
+        <a href="{{ url_for('chat.inbox') }}" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="chat-user-info">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <h2>{{ other_user.name }}</h2>
+                <p class="user-location">{{ other_user.location or 'Location not set' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="messages-container" id="messagesContainer">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}">
+                <div class="message-content">
+                    {{ message.content }}
+                </div>
+                <div class="message-time">
+                    {{ message.created_at.strftime('%I:%M %p') }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-chat">
+                <p>Start the conversation!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('chat.send_message', user_id=other_user.id) }}" class="message-form">
+        <div class="input-group">
+            <textarea name="content" class="message-input" placeholder="Type your message..." required rows="2"></textarea>
+            <button type="submit" class="send-button">
+                <i class="fas fa-paper-plane"></i> Send
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.chat-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    font-size: 20px;
+    color: #4CAF50;
+    margin-right: 15px;
+    text-decoration: none;
+}
+
+.chat-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.chat-user-info .user-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #4CAF50;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.chat-user-info h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.user-location {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.messages-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    height: 500px;
+    overflow-y: auto;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.message {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.message.sent {
+    align-items: flex-end;
+}
+
+.message.received {
+    align-items: flex-start;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    word-wrap: break-word;
+}
+
+.message.sent .message-content {
+    background: #4CAF50;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.received .message-content {
+    background: white;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    padding: 0 8px;
+}
+
+.empty-chat {
+    text-align: center;
+    padding: 100px 20px;
+    color: #999;
+}
+
+.message-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.message-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: none;
+}
+
+.send-button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.send-button:hover {
+    background: #45a049;
+}
+</style>
+
+<script>
+// Scroll to bottom of messages
+document.addEventListener('DOMContentLoaded', function() {
+    var container = document.getElementById('messagesContainer');
+    container.scrollTop = container.scrollHeight;
+});
+</script>
+{% endblock %}

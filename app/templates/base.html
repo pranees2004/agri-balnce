@@ -75,21 +75,15 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ url_for('dashboard.profile') }}" class="nav-link {% if request.endpoint and request.endpoint == 'dashboard.profile' %}active{% endif %}">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Profile</span>
+                <a href="{{ url_for('chat.inbox') }}" class="nav-link {% if request.endpoint and 'chat' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-comments"></i>
+                    <span>Messages</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="{{ url_for('settings.index') }}" class="nav-link {% if request.endpoint and 'settings' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ url_for('auth.logout') }}" class="nav-link logout-link">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
                 </a>
             </li>
         </ul>

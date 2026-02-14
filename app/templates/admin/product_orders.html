@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Product Orders - Admin - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Product Orders</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-tabs mb-20">
+    <a href="{{ url_for('admin.product_orders', status='pending') }}" class="filter-tab {{ 'active' if status_filter == 'pending' else '' }}">
+        Pending ({{ pending_count }})
+    </a>
+    <a href="{{ url_for('admin.product_orders', status='approved') }}" class="filter-tab {{ 'active' if status_filter == 'approved' else '' }}">
+        Approved ({{ approved_count }})
+    </a>
+    <a href="{{ url_for('admin.product_orders', status='rejected') }}" class="filter-tab {{ 'active' if status_filter == 'rejected' else '' }}">
+        Rejected ({{ rejected_count }})
+    </a>
+    <a href="{{ url_for('admin.product_orders', status='completed') }}" class="filter-tab {{ 'active' if status_filter == 'completed' else '' }}">
+        Completed ({{ completed_count }})
+    </a>
+    <a href="{{ url_for('admin.product_orders', status='all') }}" class="filter-tab {{ 'active' if status_filter == 'all' else '' }}">
+        All Orders
+    </a>
+</div>
+
+{% if orders %}
+<div class="orders-grid">
+    {% for order in orders %}
+    <div class="card order-card">
+        <div class="order-header">
+            <div>
+                <h3>Order #{{ order.id }}</h3>
+                <p class="text-secondary">
+                    <i class="fas fa-user"></i> {{ order.user.name }}
+                    {% if order.user.mobile %}
+                    <br><i class="fas fa-phone"></i> {{ order.user.mobile }}
+                    {% endif %}
+                </p>
+            </div>
+            <span class="badge badge-{{ 'success' if order.status == 'approved' else 'warning' if order.status == 'pending' else 'danger' if order.status == 'rejected' else 'info' }}">
+                {{ order.status.title() }}
+            </span>
+        </div>
+        
+        <div class="order-details">
+            <div class="order-product">
+                <h4>{{ order.product.name }}</h4>
+                <p class="text-secondary">{{ order.product.category.title() }} - {{ order.product.brand or 'N/A' }}</p>
+            </div>
+            
+            <div class="order-info">
+                <div class="info-row">
+                    <span>Quantity:</span>
+                    <strong>{{ order.quantity }} {{ order.product.unit }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Unit Price:</span>
+                    <strong>₹{{ order.product.price }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Total Price:</span>
+                    <strong>₹{{ order.total_price }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Order Date:</span>
+                    <span>{{ order.created_at.strftime('%d %b %Y %I:%M %p') }}</span>
+                </div>
+            </div>
+            
+            {% if order.notes %}
+            <div class="order-notes">
+                <strong>User Notes:</strong>
+                <p>{{ order.notes }}</p>
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}" class="order-actions">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
+                        <option value="pending" {{ 'selected' if order.status == 'pending' else '' }}>Pending</option>
+                        <option value="approved" {{ 'selected' if order.status == 'approved' else '' }}>Approved</option>
+                        <option value="rejected" {{ 'selected' if order.status == 'rejected' else '' }}>Rejected</option>
+                        <option value="completed" {{ 'selected' if order.status == 'completed' else '' }}>Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Admin Notes</label>
+                    <textarea name="admin_notes" class="form-control" placeholder="Add notes for the user...">{{ order.admin_notes or '' }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Order
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-inbox fa-3x"></i>
+    <h3>No orders found</h3>
+    <p>No {{ status_filter if status_filter != 'all' else '' }} orders at the moment</p>
+</div>
+{% endif %}
+
+<style>
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.filter-tab {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+}
+
+.filter-tab:hover {
+    background: #f5f5f5;
+}
+
+.filter-tab.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.orders-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.order-card {
+    padding: 20px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.order-header h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+}
+
+.order-product h4 {
+    margin: 0 0 5px 0;
+}
+
+.order-info {
+    margin: 15px 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-notes {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.order-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+</style>
+{% endblock %}
