@@ -767,7 +767,7 @@ def add_quota():
 @login_required
 @admin_required
 def edit_quota(quota_id):
-    """Edit admin quota."""
+    """Edit admin quota with integrity validation."""
     quota = AdminQuota.query.get_or_404(quota_id)
     
     if request.method == 'POST':
@@ -799,7 +799,14 @@ def edit_quota(quota_id):
         quota.taluk = request.form.get('taluk', quota.taluk)
         quota.village = request.form.get('village', quota.village)
         quota.crop_name = request.form.get('crop_name', quota.crop_name)
-        quota.total_allowed_area = float(request.form.get('total_allowed_area', quota.total_allowed_area))
+        
+        # Validate total_allowed_area - cannot be reduced below allocated_area (QUOTA INTEGRITY RULE)
+        new_total_allowed_area = float(request.form.get('total_allowed_area', quota.total_allowed_area))
+        if new_total_allowed_area < quota.allocated_area:
+            flash(f'Cannot reduce total allowed area to {new_total_allowed_area} {quota.area_unit}. Current allocated area is {quota.allocated_area} {quota.area_unit}.', 'error')
+            return render_template('admin/edit_quota.html', quota=quota, districts=TAMIL_NADU_DISTRICTS, crops=COMMON_CROPS)
+        
+        quota.total_allowed_area = new_total_allowed_area
         quota.area_unit = request.form.get('area_unit', quota.area_unit)
         quota.max_per_farmer = float(request.form.get('max_per_farmer')) if request.form.get('max_per_farmer') else None
         quota.predicted_demand_volume = float(request.form.get('predicted_demand_volume')) if request.form.get('predicted_demand_volume') else quota.predicted_demand_volume

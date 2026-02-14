@@ -123,6 +123,62 @@ class Cultivation(db.Model):
     # Relationships
     harvest_sales = db.relationship('HarvestSale', backref='cultivation', lazy='dynamic')
     
+    def validate_harvest_submission(self, harvest_date, harvest_quantity, tolerance=0.10):
+        """Validate harvest submission against quota rules and estimated yield.
+        
+        Args:
+            harvest_date: Date of harvest
+            harvest_quantity: Quantity being harvested
+            tolerance: Allowed tolerance percentage (default 10%)
+        
+        Returns:
+            tuple: (is_valid, error_message)
+        """
+        # Check if harvest date is within quota harvest window
+        if self.quota:
+            if self.quota.harvest_season_start and self.quota.harvest_season_end:
+                if isinstance(harvest_date, str):
+                    harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
+                
+                if not (self.quota.harvest_season_start <= harvest_date <= self.quota.harvest_season_end):
+                    return False, f"Harvest date must be between {self.quota.harvest_season_start} and {self.quota.harvest_season_end}"
+        
+        # Check if cultivation is active
+        if self.status not in ['planned', 'active']:
+            return False, "Only active cultivations can be harvested"
+        
+        # Validate quantity against estimated yield (with tolerance)
+        if self.estimated_yield:
+            max_allowed = self.estimated_yield * (1 + tolerance)
+            if harvest_quantity > max_allowed:
+                return False, f"Harvest quantity ({harvest_quantity} {self.yield_unit}) exceeds estimated yield ({self.estimated_yield} {self.yield_unit}) plus {tolerance*100}% tolerance"
+        
+        return True, None
+    
+    def cancel_cultivation(self):
+        """Cancel cultivation and release quota allocation."""
+        if self.status == 'harvested':
+            raise ValueError("Cannot cancel harvested cultivation")
+        
+        # Release quota allocation
+        if self.quota:
+            self.quota.release_area(self.area_used, decrement_farmer_count=True)
+        
+        # Update legacy RegionLimit if used
+        if self.land and self.land.district:
+            from app.models import RegionLimit
+            region_limit = RegionLimit.query.filter_by(
+                crop_name=self.crop_name,
+                district=self.land.district,
+                is_active=True
+            ).first()
+            if region_limit:
+                region_limit.current_area_used = max(0, region_limit.current_area_used - self.area_used)
+                region_limit.current_cultivation_count = max(0, region_limit.current_cultivation_count - 1)
+        
+        self.status = 'cancelled'
+        self.updated_at = datetime.utcnow()
+    
     def __repr__(self):
         return f'<Cultivation {self.crop_name}>'
 
@@ -368,6 +424,65 @@ class AdminQuota(db.Model):
         
         return True, "Quota available"
     
+    def check_per_farmer_limit(self, farmer_id, requested_area):
+        """Check if farmer has not exceeded per-farmer limit for this crop."""
+        if not self.max_per_farmer:
+            return True, "No per-farmer limit set"
+        
+        # Calculate farmer's existing allocation for this quota
+        from sqlalchemy import func
+        existing_area = db.session.query(
+            func.coalesce(func.sum(Cultivation.area_used), 0)
+        ).filter(
+            Cultivation.quota_id == self.id,
+            Cultivation.user_id == farmer_id,
+            Cultivation.status.in_(['planned', 'active', 'harvested'])
+        ).scalar()
+        
+        total_requested = existing_area + requested_area
+        
+        if total_requested > self.max_per_farmer:
+            return False, f"Per-farmer limit exceeded. Current: {existing_area:.2f} {self.area_unit}, Requested: {requested_area:.2f} {self.area_unit}, Limit: {self.max_per_farmer:.2f} {self.area_unit}"
+        
+        return True, "Within per-farmer limit"
+    
+    def is_within_harvest_window(self, cultivation_start_date, cultivation_end_date):
+        """Check if cultivation dates are within the harvest window."""
+        if not self.harvest_season_start or not self.harvest_season_end:
+            return True, "No harvest window restriction"
+        
+        # Convert string dates to date objects if necessary
+        if isinstance(cultivation_start_date, str):
+            cultivation_start_date = datetime.strptime(cultivation_start_date, '%Y-%m-%d').date()
+        if isinstance(cultivation_end_date, str):
+            cultivation_end_date = datetime.strptime(cultivation_end_date, '%Y-%m-%d').date()
+        
+        # Check if cultivation dates are within harvest window
+        if cultivation_start_date < self.harvest_season_start:
+            return False, f"Cultivation start date must be on or after {self.harvest_season_start}"
+        
+        if cultivation_end_date > self.harvest_season_end:
+            return False, f"Expected harvest date must be on or before {self.harvest_season_end}"
+        
+        return True, "Within harvest window"
+    
+    def allocate_area(self, area, increment_farmer_count=True):
+        """Allocate area from quota (should be called within transaction)."""
+        if self.allocated_area + area > self.total_allowed_area:
+            raise ValueError(f"Cannot allocate {area} {self.area_unit}. Would exceed total limit.")
+        
+        self.allocated_area += area
+        if increment_farmer_count:
+            self.allocated_farmer_count += 1
+        self.updated_at = datetime.utcnow()
+    
+    def release_area(self, area, decrement_farmer_count=True):
+        """Release area back to quota (for cultivation cancellation)."""
+        self.allocated_area = max(0, self.allocated_area - area)
+        if decrement_farmer_count:
+            self.allocated_farmer_count = max(0, self.allocated_farmer_count - 1)
+        self.updated_at = datetime.utcnow()
+    
     def __repr__(self):
         return f'<AdminQuota {self.crop_name} - {self.district}>'
 
@@ -404,6 +519,19 @@ class HarvestSale(db.Model):
     # Relationships
     farmer = db.relationship('User', foreign_keys=[user_id], backref='harvest_submissions')
     reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+    
+    def get_remaining_quantity(self):
+        """Calculate remaining quantity available for sale."""
+        if self.approved_quantity is not None:
+            return self.approved_quantity
+        return self.actual_yield_quantity
+    
+    def validate_sale_quantity(self, requested_sale_quantity):
+        """Validate that sale quantity doesn't exceed remaining harvest quantity."""
+        remaining = self.get_remaining_quantity()
+        if requested_sale_quantity > remaining:
+            return False, f"Sale quantity ({requested_sale_quantity} {self.yield_unit}) exceeds remaining harvest quantity ({remaining} {self.yield_unit})"
+        return True, None
     
     def __repr__(self):
         return f'<HarvestSale {self.id} - {self.status}>'
