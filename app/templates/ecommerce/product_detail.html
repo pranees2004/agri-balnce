@@ -187,7 +187,10 @@
 
 <script>
 function changeMainImage(imageUrl) {
-    document.querySelector('.main-product-image').src = imageUrl;
+    const mainImage = document.querySelector('.main-product-image');
+    if (mainImage) {
+        mainImage.src = imageUrl;
+    }
 }
 </script>
 {% endblock %}

@@ -6,6 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 import json
+import time
 from app import db
 from app.models import (User, Land, Cultivation, CropListing, Product, CommunityPost, 
                         NewsArticle, CropPrice, RegionLimit, CropMaster, AdminQuota, 
@@ -441,8 +442,7 @@ def add_product():
                 if file and file.filename and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     # Create unique filename
-                    timestamp = str(int(os.times()[4] * 1000))
-                    ext = filename.rsplit('.', 1)[1].lower()
+                    timestamp = str(int(time.time() * 1000))
                     filename = f"product_{timestamp}_{filename}"
                     
                     # Create upload directory if it doesn't exist
@@ -464,7 +464,7 @@ def add_product():
                 if file and file.filename and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     # Create unique filename
-                    timestamp = str(int(os.times()[4] * 1000))
+                    timestamp = str(int(time.time() * 1000))
                     filename = f"product_video_{timestamp}_{filename}"
                     
                     # Create upload directory if it doesn't exist

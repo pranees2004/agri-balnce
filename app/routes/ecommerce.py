@@ -100,7 +100,7 @@ def order_product(product_id):
         flash('Please enter a valid quantity.', 'error')
         return redirect(url_for('ecommerce.product_detail', product_id=product_id))
     
-    if product.stock > 0 and quantity > product.stock:
+    if quantity > product.stock:
         flash(f'Only {product.stock} units available in stock.', 'error')
         return redirect(url_for('ecommerce.product_detail', product_id=product_id))
     

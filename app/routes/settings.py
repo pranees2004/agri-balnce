@@ -108,12 +108,3 @@ def delete_account():
     
     flash('Account deletion cancelled.', 'info')
     return redirect(url_for('settings.index'))
-
-
-@settings_bp.route('/logout')
-@login_required
-def logout():
-    """Logout user."""
-    logout_user()
-    flash('You have been logged out successfully.', 'success')
-    return redirect(url_for('main.index'))

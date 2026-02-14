@@ -2,6 +2,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import or_, and_
+from datetime import datetime
 from app import db
 from app.models import Message, User
 
@@ -45,7 +46,7 @@ def inbox():
         })
     
     # Sort by last message time
-    conversation_data.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else None, reverse=True)
+    conversation_data.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else datetime.min, reverse=True)
     
     return render_template('chat/inbox.html', conversations=conversation_data)
 

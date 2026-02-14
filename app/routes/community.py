@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 import json
+import time
 from app import db
 from app.models import CommunityPost, Comment
 
@@ -78,7 +79,7 @@ def create_post():
                 if file and file.filename and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     # Create unique filename
-                    timestamp = str(int(os.times()[4] * 1000))
+                    timestamp = str(int(time.time() * 1000))
                     filename = f"{current_user.id}_{timestamp}_{filename}"
                     
                     # Create upload directory if it doesn't exist
