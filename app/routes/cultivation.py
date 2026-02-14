@@ -4,13 +4,14 @@ import uuid
 from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
+from sqlalchemy import select
 from app import db
 from app.models import Land, Cultivation, CropPrice, RegionLimit, AdminQuota, CropMaster, Notification
 
 cultivation_bp = Blueprint('cultivation', __name__)
 
-# Tolerance for quantity variations (5% to account for measurement inaccuracies)
-HARVEST_QUANTITY_TOLERANCE = 0.05
+# Tolerance for quantity variations (10% to account for measurement inaccuracies)
+HARVEST_QUANTITY_TOLERANCE = 0.10
 
 # Yield estimation factors (based on agricultural research averages)
 # Keys use lowercase to match normalized input
@@ -145,21 +146,54 @@ def find_matching_quota(land, crop_name):
     return quota
 
 
-def check_admin_quota(land, crop_name, area_needed):
-    """Check if cultivation is allowed based on admin-defined quotas (new system)."""
+def check_admin_quota(land, crop_name, area_needed, farmer_id, cultivation_start_date, cultivation_end_date):
+    """Check if cultivation is allowed based on admin-defined quotas with comprehensive validation.
+    
+    This function performs all necessary validation checks:
+    1. Check if matching active quota exists for location and crop
+    2. Validate cultivation dates are within quota harvest window
+    3. Check if requested area doesn't exceed total quota limit
+    4. Check if per-farmer limit is not exceeded
+    
+    Args:
+        land: Land object
+        crop_name: Name of the crop
+        area_needed: Requested cultivation area
+        farmer_id: ID of the farmer
+        cultivation_start_date: Start date of cultivation
+        cultivation_end_date: Expected harvest date
+    
+    Returns:
+        tuple: (is_allowed, message, quota_object)
+    """
     quota = find_matching_quota(land, crop_name)
     
     if not quota:
         # Check old RegionLimit system for backward compatibility
         return check_region_limits(crop_name, land.district or 'Other', area_needed)
     
-    # Check if quota is available
-    is_available, message = quota.is_quota_available(area_needed, current_user.id)
+    # 1. Check if quota is active
+    if not quota.is_active:
+        return False, "Quota is not active", None
     
+    # 2. Check if cultivation dates are within harvest window
+    is_within_window, window_message = quota.is_within_harvest_window(
+        cultivation_start_date, cultivation_end_date
+    )
+    if not is_within_window:
+        return False, window_message, quota
+    
+    # 3. Check if quota is available (total area check)
+    is_available, availability_message = quota.is_quota_available(area_needed, farmer_id)
     if not is_available:
-        return False, message, None
+        return False, availability_message, quota
     
-    return True, "Quota available", quota
+    # 4. Check per-farmer limit
+    per_farmer_ok, per_farmer_message = quota.check_per_farmer_limit(farmer_id, area_needed)
+    if not per_farmer_ok:
+        return False, per_farmer_message, quota
+    
+    return True, "All quota checks passed", quota
 
 
 def check_region_limits(crop_name, district, area_needed):
@@ -559,7 +593,13 @@ def active_cultivations():
 @cultivation_bp.route('/start', methods=['GET', 'POST'])
 @login_required
 def start_cultivation():
-    """Start new cultivation with quota enforcement and admin-controlled pricing."""
+    """Start new cultivation with quota enforcement and admin-controlled pricing.
+    
+    This function implements strict quota enforcement with:
+    - Row-level locking (SELECT FOR UPDATE) to prevent race conditions
+    - Transaction-safe quota allocation
+    - Comprehensive validation of all quota rules
+    """
     lands = Land.query.filter_by(user_id=current_user.id).all()
     
     if not lands:
@@ -583,6 +623,10 @@ def start_cultivation():
                 flash('Please select a land, enter crop name, and specify area to use.', 'error')
                 return render_template('cultivation/start.html', lands=lands)
             
+            if not planting_date or not expected_harvest_date:
+                flash('Please provide both planting date and expected harvest date.', 'error')
+                return render_template('cultivation/start.html', lands=lands)
+            
             selected_land = Land.query.filter_by(
                 id=land_id, user_id=current_user.id
             ).first()
@@ -598,46 +642,73 @@ def start_cultivation():
                 flash(f'Cultivation area cannot exceed land size ({selected_land.land_size} {selected_land.land_size_unit}).', 'error')
                 return render_template('cultivation/start.html', lands=lands)
             
-            # Check quota enforcement (CRITICAL - Admin rules have highest priority)
-            quota_allowed, quota_message, quota_obj = check_admin_quota(
-                selected_land, crop_name, area_requested
-            )
+            # Parse dates
+            cultivation_start = datetime.strptime(planting_date, '%Y-%m-%d').date()
+            cultivation_end = datetime.strptime(expected_harvest_date, '%Y-%m-%d').date()
             
-            if not quota_allowed:
-                flash(f'Cultivation blocked by admin quota: {quota_message}', 'error')
-                
-                quota_check_result = {
-                    'allowed': False,
-                    'message': quota_message,
-                    'quota': quota_obj
-                }
-                
-                return render_template(
-                    'cultivation/start.html',
-                    lands=lands,
-                    selected_land=selected_land,
-                    quota_check=quota_check_result
-                )
-            
-            # Generate cultivation approval ID
-            approval_id = generate_cultivation_approval_id()
-            
-            # Get AI recommendations internally for yield estimation
-            # Note: Recommendations are not displayed to user but are used for:
-            # 1. Calculating estimated yield and max sale quantity
-            # 2. Storing in database for admin reference and future viewing
-            recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
-            
-            # Calculate estimated yield and max allowed sale quantity
-            estimated_yield = None
-            max_sale_qty = None
-            if recommendations.get('expected_yield'):
-                estimated_yield = recommendations['expected_yield']['quantity']
-                # Allow tolerance for measurement variations (defined constant)
-                max_sale_qty = estimated_yield * (1 + HARVEST_QUANTITY_TOLERANCE)
-            
-            # Create cultivation record with quota reservation
+            # Start transaction with row-level locking
             try:
+                # Find quota and acquire lock
+                quota_obj = find_matching_quota(selected_land, crop_name)
+                
+                if quota_obj:
+                    # Use SELECT FOR UPDATE to lock the quota row
+                    # This prevents concurrent modifications during our transaction
+                    quota_obj = db.session.query(AdminQuota).filter_by(
+                        id=quota_obj.id
+                    ).with_for_update().first()
+                    
+                    # Perform comprehensive quota checks within the locked transaction
+                    quota_allowed, quota_message, _ = check_admin_quota(
+                        selected_land, 
+                        crop_name, 
+                        area_requested,
+                        current_user.id,
+                        cultivation_start,
+                        cultivation_end
+                    )
+                    
+                    if not quota_allowed:
+                        db.session.rollback()
+                        flash(f'Cultivation blocked by admin quota: {quota_message}', 'error')
+                        
+                        quota_check_result = {
+                            'allowed': False,
+                            'message': quota_message,
+                            'quota': quota_obj
+                        }
+                        
+                        return render_template(
+                            'cultivation/start.html',
+                            lands=lands,
+                            selected_land=selected_land,
+                            quota_check=quota_check_result
+                        )
+                else:
+                    # Check old RegionLimit system for backward compatibility
+                    quota_allowed, quota_message, _ = check_region_limits(
+                        crop_name, selected_land.district or 'Other', area_requested
+                    )
+                    if not quota_allowed:
+                        db.session.rollback()
+                        flash(f'Cultivation blocked: {quota_message}', 'error')
+                        return render_template('cultivation/start.html', lands=lands)
+                
+                # Generate cultivation approval ID
+                approval_id = generate_cultivation_approval_id()
+                
+                # Get AI recommendations internally for yield estimation
+                recommendations = get_ai_recommendations(selected_land, crop_name, area_requested)
+                
+                # Calculate estimated yield and max allowed sale quantity
+                estimated_yield = None
+                max_sale_qty = None
+                if recommendations.get('expected_yield'):
+                    estimated_yield = recommendations['expected_yield']['quantity']
+                    # Allow tolerance for measurement variations (defined constant)
+                    max_sale_qty = estimated_yield * (1 + HARVEST_QUANTITY_TOLERANCE)
+                
+                # Create cultivation record
                 cultivation = Cultivation(
                     cultivation_approval_id=approval_id,
                     user_id=current_user.id,
@@ -646,8 +717,8 @@ def start_cultivation():
                     crop_name=crop_name,
                     variety=variety,
                     area_used=area_requested,
-                    planting_date=datetime.strptime(planting_date, '%Y-%m-%d').date() if planting_date else None,
-                    expected_harvest_date=datetime.strptime(expected_harvest_date, '%Y-%m-%d').date() if expected_harvest_date else None,
+                    planting_date=cultivation_start,
+                    expected_harvest_date=cultivation_end,
                     status='planned',
                     estimated_yield=estimated_yield,
                     max_allowed_sale_quantity=max_sale_qty,
@@ -657,11 +728,9 @@ def start_cultivation():
                 )
                 db.session.add(cultivation)
                 
-                # Reserve area from quota (atomic operation)
+                # Allocate area from quota using the helper method (atomic operation within transaction)
                 if quota_obj:
-                    quota_obj.allocated_area += area_requested
-                    quota_obj.allocated_farmer_count += 1
-                    quota_obj.updated_at = datetime.utcnow()
+                    quota_obj.allocate_area(area_requested, increment_farmer_count=True)
                 
                 # Update old RegionLimit if no quota (backward compatibility)
                 elif selected_land.district:
@@ -674,12 +743,19 @@ def start_cultivation():
                         region_limit.current_area_used += area_requested
                         region_limit.current_cultivation_count += 1
                 
+                # Commit transaction - all changes are atomic
                 db.session.commit()
                 
                 flash(f'Cultivation started successfully! Approval ID: {approval_id}', 'success')
                 return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation.id))
             
+            except ValueError as ve:
+                # Quota allocation errors
+                db.session.rollback()
+                flash(f'Quota allocation error: {str(ve)}', 'error')
+                return render_template('cultivation/start.html', lands=lands)
             except Exception as e:
+                # General errors
                 db.session.rollback()
                 flash(f'Error starting cultivation: {str(e)}', 'error')
                 return render_template('cultivation/start.html', lands=lands)
@@ -739,20 +815,52 @@ def view_cultivation(cultivation_id):
 @cultivation_bp.route('/<int:cultivation_id>/update-status', methods=['POST'])
 @login_required
 def update_status(cultivation_id):
-    """Update cultivation status."""
+    """Update cultivation status with harvest validation."""
     cultivation = Cultivation.query.filter_by(
         id=cultivation_id, user_id=current_user.id
     ).first_or_404()
     
     new_status = request.form.get('status')
-    if new_status in ['planned', 'active', 'harvested', 'failed']:
-        cultivation.status = new_status
+    if new_status in ['planned', 'active', 'harvested', 'failed', 'cancelled']:
         
+        # Handle harvest status update with validation
         if new_status == 'harvested':
-            cultivation.actual_harvest_date = datetime.utcnow().date()
-            actual_yield = request.form.get('actual_yield')
-            if actual_yield:
-                cultivation.actual_yield = float(actual_yield)
+            harvest_date_str = request.form.get('harvest_date')
+            actual_yield_str = request.form.get('actual_yield')
+            
+            if not harvest_date_str or not actual_yield_str:
+                flash('Harvest date and actual yield are required for harvested status.', 'error')
+                return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
+            
+            harvest_date = datetime.strptime(harvest_date_str, '%Y-%m-%d').date()
+            actual_yield = float(actual_yield_str)
+            
+            # Validate harvest submission
+            is_valid, error_message = cultivation.validate_harvest_submission(
+                harvest_date, actual_yield, HARVEST_QUANTITY_TOLERANCE
+            )
+            
+            if not is_valid:
+                flash(f'Harvest validation failed: {error_message}', 'error')
+                return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
+            
+            # Update cultivation with harvest details
+            cultivation.status = new_status
+            cultivation.actual_harvest_date = harvest_date
+            cultivation.actual_yield = actual_yield
+            
+        elif new_status == 'cancelled':
+            # Handle cultivation cancellation
+            try:
+                cultivation.cancel_cultivation()
+                db.session.commit()
+                flash('Cultivation cancelled and quota released!', 'success')
+                return redirect(url_for('cultivation.list_cultivations'))
+            except ValueError as ve:
+                flash(f'Cancellation error: {str(ve)}', 'error')
+                return redirect(url_for('cultivation.view_cultivation', cultivation_id=cultivation_id))
+        else:
+            cultivation.status = new_status
         
         db.session.commit()
         flash(f'Status updated to {new_status}!', 'success')
