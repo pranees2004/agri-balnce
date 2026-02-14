@@ -138,8 +138,7 @@ class Cultivation(db.Model):
         if self.quota:
             if self.quota.harvest_season_start and self.quota.harvest_season_end:
                 if isinstance(harvest_date, str):
-                    from datetime import datetime as dt
-                    harvest_date = dt.strptime(harvest_date, '%Y-%m-%d').date()
+                    harvest_date = datetime.strptime(harvest_date, '%Y-%m-%d').date()
                 
                 if not (self.quota.harvest_season_start <= harvest_date <= self.quota.harvest_season_end):
                     return False, f"Harvest date must be between {self.quota.harvest_season_start} and {self.quota.harvest_season_end}"
@@ -454,11 +453,9 @@ class AdminQuota(db.Model):
         
         # Convert string dates to date objects if necessary
         if isinstance(cultivation_start_date, str):
-            from datetime import datetime as dt
-            cultivation_start_date = dt.strptime(cultivation_start_date, '%Y-%m-%d').date()
+            cultivation_start_date = datetime.strptime(cultivation_start_date, '%Y-%m-%d').date()
         if isinstance(cultivation_end_date, str):
-            from datetime import datetime as dt
-            cultivation_end_date = dt.strptime(cultivation_end_date, '%Y-%m-%d').date()
+            cultivation_end_date = datetime.strptime(cultivation_end_date, '%Y-%m-%d').date()
         
         # Check if cultivation dates are within harvest window
         if cultivation_start_date < self.harvest_season_start:

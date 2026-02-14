@@ -690,7 +690,6 @@ def start_cultivation():
                         crop_name, selected_land.district or 'Other', area_requested
                     )
                     if not quota_allowed:
-                        db.session.rollback()
                         flash(f'Cultivation blocked: {quota_message}', 'error')
                         return render_template('cultivation/start.html', lands=lands)
                 
