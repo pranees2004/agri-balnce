@@ -12,6 +12,20 @@
 
 <div class="grid-2">
     <div class="card">
+        {% if product.images %}
+        {% set image_list = product.images|from_json if product.images else [] %}
+        {% if image_list %}
+        <div class="product-gallery">
+            <img src="{{ image_list[0] }}" alt="{{ product.name }}" class="main-product-image">
+            {% if image_list|length > 1 %}
+            <div class="thumbnail-gallery">
+                {% for image_url in image_list %}
+                <img src="{{ image_url }}" alt="{{ product.name }}" class="thumbnail-image" onclick="changeMainImage('{{ image_url }}')">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
         <div class="product-image" style="height: 300px; border-radius: var(--border-radius);">
             {% if product.category == 'seeds' %}
             <i class="fas fa-seedling"></i>
@@ -25,6 +39,37 @@
             <i class="fas fa-tools"></i>
             {% endif %}
         </div>
+        {% endif %}
+        {% else %}
+        <div class="product-image" style="height: 300px; border-radius: var(--border-radius);">
+            {% if product.category == 'seeds' %}
+            <i class="fas fa-seedling"></i>
+            {% elif product.category == 'fertilizers' %}
+            <i class="fas fa-flask"></i>
+            {% elif product.category == 'pesticides' %}
+            <i class="fas fa-spray-can"></i>
+            {% elif product.category == 'machinery' %}
+            <i class="fas fa-tractor"></i>
+            {% else %}
+            <i class="fas fa-tools"></i>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if product.videos %}
+        {% set video_list = product.videos|from_json if product.videos else [] %}
+        {% if video_list %}
+        <div class="product-videos mt-20">
+            <h4>Product Videos</h4>
+            {% for video_url in video_list %}
+            <video controls class="product-video">
+                <source src="{{ video_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
     
     <div class="card">
@@ -50,12 +95,30 @@
         </div>
         {% endif %}
         
+        {% if current_user.is_authenticated %}
         <div class="mt-20">
-            <button class="btn btn-primary btn-large btn-block" {{ 'disabled' if product.stock == 0 else '' }}>
-                <i class="fas fa-shopping-cart"></i> Contact to Buy
-            </button>
-            <p class="text-secondary text-center mt-10">Contact admin to purchase this product</p>
+            <form method="POST" action="{{ url_for('ecommerce.order_product', product_id=product.id) }}">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" class="form-control" min="1" value="1" required {{ 'disabled' if product.stock == 0 else '' }}>
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea name="notes" class="form-control" placeholder="Any special requirements or questions..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-large btn-block" {{ 'disabled' if product.stock == 0 else '' }}>
+                    <i class="fas fa-shopping-cart"></i> Place Order
+                </button>
+            </form>
+            <p class="text-secondary text-center mt-10">Order will be sent to admin for approval</p>
         </div>
+        {% else %}
+        <div class="mt-20">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-large btn-block">
+                <i class="fas fa-sign-in-alt"></i> Login to Order
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -80,4 +143,54 @@
     </div>
 </div>
 {% endif %}
+
+<style>
+.product-gallery {
+    margin-bottom: 20px;
+}
+
+.main-product-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.thumbnail-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+}
+
+.thumbnail-image {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border 0.3s;
+}
+
+.thumbnail-image:hover {
+    border-color: #4CAF50;
+}
+
+.product-video {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+</style>
+
+<script>
+function changeMainImage(imageUrl) {
+    const mainImage = document.querySelector('.main-product-image');
+    if (mainImage) {
+        mainImage.src = imageUrl;
+    }
+}
+</script>
 {% endblock %}

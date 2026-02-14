@@ -1,10 +1,21 @@
 """Community routes for AgriBalance - Farmer discussions."""
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+import os
+import json
+import time
 from app import db
 from app.models import CommunityPost, Comment
 
 community_bp = Blueprint('community', __name__)
+
+# Allowed file extensions for image uploads
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    """Check if file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @community_bp.route('/')
@@ -60,11 +71,34 @@ def create_post():
             flash('Please fill in title and content.', 'error')
             return render_template('community/create_post.html')
         
+        # Handle image uploads
+        image_urls = []
+        if 'images' in request.files:
+            files = request.files.getlist('images')
+            for file in files:
+                if file and file.filename and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    # Create unique filename
+                    timestamp = str(int(time.time() * 1000))
+                    filename = f"{current_user.id}_{timestamp}_{filename}"
+                    
+                    # Create upload directory if it doesn't exist
+                    upload_dir = os.path.join('app', 'static', 'uploads', 'community')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    
+                    # Save file
+                    filepath = os.path.join(upload_dir, filename)
+                    file.save(filepath)
+                    
+                    # Store relative URL
+                    image_urls.append(f"/static/uploads/community/{filename}")
+        
         post = CommunityPost(
             user_id=current_user.id,
             title=title,
             content=content,
-            category=category
+            category=category,
+            images=json.dumps(image_urls) if image_urls else None
         )
         db.session.add(post)
         db.session.commit()

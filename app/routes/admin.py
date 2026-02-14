@@ -3,12 +3,23 @@ from functools import wraps
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
+import os
+import json
+import time
 from app import db
 from app.models import (User, Land, Cultivation, CropListing, Product, CommunityPost, 
                         NewsArticle, CropPrice, RegionLimit, CropMaster, AdminQuota, 
-                        HarvestSale, MarketDemandData, Notification)
+                        HarvestSale, MarketDemandData, Notification, ProductOrder)
 
 admin_bp = Blueprint('admin', __name__)
+
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov', 'webm'}
+
+def allowed_file(filename):
+    """Check if file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Tamil Nadu Districts for region management
 TAMIL_NADU_DISTRICTS = [
@@ -423,6 +434,50 @@ def products():
 def add_product():
     """Add new product."""
     if request.method == 'POST':
+        # Handle image uploads
+        image_urls = []
+        if 'images' in request.files:
+            files = request.files.getlist('images')
+            for file in files:
+                if file and file.filename and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    # Create unique filename
+                    timestamp = str(int(time.time() * 1000))
+                    filename = f"product_{timestamp}_{filename}"
+                    
+                    # Create upload directory if it doesn't exist
+                    upload_dir = os.path.join('app', 'static', 'uploads', 'products')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    
+                    # Save file
+                    filepath = os.path.join(upload_dir, filename)
+                    file.save(filepath)
+                    
+                    # Store relative URL
+                    image_urls.append(f"/static/uploads/products/{filename}")
+        
+        # Handle video uploads
+        video_urls = []
+        if 'videos' in request.files:
+            files = request.files.getlist('videos')
+            for file in files:
+                if file and file.filename and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    # Create unique filename
+                    timestamp = str(int(time.time() * 1000))
+                    filename = f"product_video_{timestamp}_{filename}"
+                    
+                    # Create upload directory if it doesn't exist
+                    upload_dir = os.path.join('app', 'static', 'uploads', 'products', 'videos')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    
+                    # Save file
+                    filepath = os.path.join(upload_dir, filename)
+                    file.save(filepath)
+                    
+                    # Store relative URL
+                    video_urls.append(f"/static/uploads/products/videos/{filename}")
+        
         product = Product(
             name=request.form.get('name'),
             category=request.form.get('category'),
@@ -431,8 +486,8 @@ def add_product():
             stock=int(request.form.get('stock', 0)),
             unit=request.form.get('unit'),
             brand=request.form.get('brand'),
-            images=request.form.get('images'),
-            videos=request.form.get('videos'),
+            images=json.dumps(image_urls) if image_urls else None,
+            videos=json.dumps(video_urls) if video_urls else None,
             contact_name=request.form.get('contact_name'),
             contact_phone=request.form.get('contact_phone'),
             contact_email=request.form.get('contact_email'),
@@ -973,3 +1028,55 @@ def market_demand():
     
     crops = CropMaster.query.order_by(CropMaster.crop_name).all()
     return render_template('admin/market_demand.html', demand_data=demand_data, alerts=alerts, quotas=quotas, crops=crops)
+
+
+# Product Orders Management
+@admin_bp.route('/orders')
+@login_required
+@admin_required
+def product_orders():
+    """View all product orders."""
+    status_filter = request.args.get('status', 'pending')
+    
+    if status_filter == 'all':
+        orders = ProductOrder.query.order_by(ProductOrder.created_at.desc()).all()
+    else:
+        orders = ProductOrder.query.filter_by(status=status_filter).order_by(
+            ProductOrder.created_at.desc()
+        ).all()
+    
+    # Count orders by status
+    pending_count = ProductOrder.query.filter_by(status='pending').count()
+    approved_count = ProductOrder.query.filter_by(status='approved').count()
+    rejected_count = ProductOrder.query.filter_by(status='rejected').count()
+    completed_count = ProductOrder.query.filter_by(status='completed').count()
+    
+    return render_template('admin/product_orders.html', 
+                         orders=orders,
+                         status_filter=status_filter,
+                         pending_count=pending_count,
+                         approved_count=approved_count,
+                         rejected_count=rejected_count,
+                         completed_count=completed_count)
+
+
+@admin_bp.route('/orders/<int:order_id>/update', methods=['POST'])
+@login_required
+@admin_required
+def update_order_status(order_id):
+    """Update order status."""
+    order = ProductOrder.query.get_or_404(order_id)
+    
+    new_status = request.form.get('status')
+    admin_notes = request.form.get('admin_notes')
+    
+    if new_status in ['pending', 'approved', 'rejected', 'completed']:
+        order.status = new_status
+        if admin_notes:
+            order.admin_notes = admin_notes
+        db.session.commit()
+        flash(f'Order #{order.id} status updated to {new_status}!', 'success')
+    else:
+        flash('Invalid status.', 'error')
+    
+    return redirect(url_for('admin.product_orders'))

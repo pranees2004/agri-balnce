@@ -1,6 +1,6 @@
 """Settings routes for AgriBalance."""
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from app import db
 
 settings_bp = Blueprint('settings', __name__)

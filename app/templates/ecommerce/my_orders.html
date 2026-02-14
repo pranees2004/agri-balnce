@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - AgriBalance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Orders</h1>
+    <a href="{{ url_for('ecommerce.products') }}" class="btn btn-primary">
+        <i class="fas fa-shopping-cart"></i> Browse Products
+    </a>
+</div>
+
+{% if orders %}
+<div class="orders-grid">
+    {% for order in orders %}
+    <div class="card order-card">
+        <div class="order-header">
+            <h3>Order #{{ order.id }}</h3>
+            <span class="badge badge-{{ 'success' if order.status == 'approved' else 'warning' if order.status == 'pending' else 'danger' if order.status == 'rejected' else 'info' }}">
+                {{ order.status.title() }}
+            </span>
+        </div>
+        
+        <div class="order-details">
+            <div class="order-product">
+                <h4>{{ order.product.name }}</h4>
+                <p class="text-secondary">{{ order.product.category.title() }}</p>
+            </div>
+            
+            <div class="order-info">
+                <div class="info-row">
+                    <span>Quantity:</span>
+                    <strong>{{ order.quantity }} {{ order.product.unit }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Total Price:</span>
+                    <strong>₹{{ order.total_price }}</strong>
+                </div>
+                <div class="info-row">
+                    <span>Order Date:</span>
+                    <span>{{ order.created_at.strftime('%d %b %Y') }}</span>
+                </div>
+            </div>
+            
+            {% if order.notes %}
+            <div class="order-notes">
+                <strong>Your Notes:</strong>
+                <p>{{ order.notes }}</p>
+            </div>
+            {% endif %}
+            
+            {% if order.admin_notes %}
+            <div class="admin-notes">
+                <strong>Admin Notes:</strong>
+                <p>{{ order.admin_notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-shopping-bag fa-3x"></i>
+    <h3>No orders yet</h3>
+    <p>Browse our products and place your first order!</p>
+    <a href="{{ url_for('ecommerce.products') }}" class="btn btn-primary mt-20">
+        <i class="fas fa-shopping-cart"></i> Browse Products
+    </a>
+</div>
+{% endif %}
+
+<style>
+.orders-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.order-card {
+    padding: 20px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.order-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.order-product h4 {
+    margin: 0 0 5px 0;
+}
+
+.order-info {
+    margin: 15px 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-notes, .admin-notes {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.admin-notes {
+    background: #e3f2fd;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.empty-state i {
+    color: #ccc;
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}
